@@ -32,27 +32,27 @@ from mujoco_playground._src.locomotion.berkeley_humanoid import berkeley_humanoi
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      ctrl_dt=0.02,
-      sim_dt=0.002,
-      episode_length=1000,
-      action_repeat=1,
-      action_scale=0.5,
-      history_len=1,
-      soft_joint_pos_limit_factor=0.95,
+      ctrl_dt=0.02, # Übernehmbar
+      sim_dt=0.002, # Übernehmbar
+      episode_length=1000, # Übernehmbar
+      action_repeat=1, # Übernehmbar
+      action_scale=0.5, # Übernehmbar
+      history_len=1, # Übernehmbar
+      soft_joint_pos_limit_factor=0.95, # weiche Gelenkpositionsgrenze (95% der Harten) -> sollte übernehmbar sein
       noise_config=config_dict.create(
-          level=1.0,  # Set to 0.0 to disable noise.
-          scales=config_dict.create(
-              hip_pos=0.03,  # rad
-              kfe_pos=0.05,
-              ffe_pos=0.08,
-              faa_pos=0.03,
-              joint_vel=1.5,  # rad/s
-              gravity=0.05,
-              linvel=0.1,
-              gyro=0.2,  # angvel.
+          level=1.0,  # Set to 0.0 to disable noise. -> Übernehmbar (stabilisert das Modell)
+          scales=config_dict.create( # Überprüfen, ob die einzelnen Parameter auch auf Wolfgang treffen; Werte erstmal lassen
+              hip_pos=0.03,  # rad, Hüfte
+              kfe_pos=0.05, # Kniee
+              ffe_pos=0.08, # Fußgelenke
+              faa_pos=0.03, # Fußgelenke in der Abduktion/Adduktion
+              joint_vel=1.5,  # rad/s, Gelenkgeschwindigkeit
+              gravity=0.05, # Schwerkraftmessung
+              linvel=0.1, # lineare Geschwindigkeit
+              gyro=0.2,  # angvel. Winkelgeschwindigkeit
           ),
       ),
-      reward_config=config_dict.create(
+      reward_config=config_dict.create( # Sind die Parameter nutzbar?
           scales=config_dict.create(
               # Tracking related rewards.
               tracking_lin_vel=1.0,
@@ -63,35 +63,35 @@ def default_config() -> config_dict.ConfigDict:
               orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
-              torques=-2.5e-5,
-              action_rate=-0.01,
+              torques=-2.5e-5, # Hohe Drehmomente an den Gelenken werden bestraft.
+              action_rate=-0.01, # Bestraft schnelle Änderungen in den Aktionen.
               energy=0.0,
               # Feet related rewards.
-              feet_clearance=0.0,
-              feet_air_time=2.0,
-              feet_slip=-0.25,
-              feet_height=0.0,
-              feet_phase=1.0,
+              feet_clearance=0.0, # Fußfreiheit -> z.B. zu niedrige Schritte
+              feet_air_time=2.0, # Belohnt die Zeit, in der die Füße in der Luft sind.
+              feet_slip=-0.25, # Bestraft das Rutschen der Füße auf dem Boden
+              feet_height=0.0, # Abweichung der Fußhöhe
+              feet_phase=1.0, # Belohnt das Einhalten eines gewünschten Gangzyklus.
               # Other rewards.
-              stand_still=0.0,
-              alive=0.0,
-              termination=-1.0,
+              stand_still=0.0, # Bewegung ohne Befehle
+              alive=0.0, # Lebendig bleiben
+              termination=-1.0, # Bestraft das vorzeitige Beenden der Episode
               # Pose related rewards.
-              joint_deviation_knee=-0.1,
-              joint_deviation_hip=-0.25,
-              dof_pos_limits=-1.0,
-              pose=-1.0,
+              joint_deviation_knee=-0.1, # Bestraft Abweichungen der Kniegelenke von der gewünschten Position.
+              joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
+              dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
+              pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
           ),
-          tracking_sigma=0.5,
+          tracking_sigma=0.5, # Beeinflusst, wie empfindlich die Belohnung auf Abweichungen zwischen der gewünschten Geschwindigkeit (Befehl) und der tatsächlichen Geschwindigkeit des Roboters reagiert.
           max_foot_height=0.1,
           base_height_target=0.5,
       ),
-      push_config=config_dict.create(
-          enable=True,
-          interval_range=[5.0, 10.0],
-          magnitude_range=[0.1, 2.0],
+      push_config=config_dict.create( # Konfiguration für zufällige Stöße
+          enable=True, # Zufällige Stöße sind aktiviert
+          interval_range=[5.0, 10.0], # Zeitbereich zwischen zwei aufeinanderfolgenden Stößen
+          magnitude_range=[0.1, 2.0], # Stärke der Stöße
       ),
-      lin_vel_x=[-1.0, 1.0],
+      lin_vel_x=[-1.0, 1.0], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
       lin_vel_y=[-1.0, 1.0],
       ang_vel_yaw=[-1.0, 1.0],
   )
