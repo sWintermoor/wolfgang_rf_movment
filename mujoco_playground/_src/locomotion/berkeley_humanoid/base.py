@@ -24,39 +24,39 @@ import mujoco
 from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.locomotion.berkeley_humanoid import berkeley_humanoid_constants as consts
+from mujoco_playground._src.locomotion.berkeley_humanoid import berkeley_humanoid_constants as consts # An Wolfgang anpassen -> Eigene Datei erstellen
 
 
 def get_assets() -> Dict[str, bytes]:
   assets = {}
-  mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml")
-  mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls" / "assets")
-  path = mjx_env.MENAGERIE_PATH / "berkeley_humanoid"
+  mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml") 
+  mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls" / "assets") # Gibt es sowas für Wolfgang? -> png-Dateien
+  path = mjx_env.MENAGERIE_PATH / "berkeley_humanoid" # An Wolfgang anpassen
   mjx_env.update_assets(assets, path, "*.xml")
   mjx_env.update_assets(assets, path / "assets")
   return assets
 
 
-class BerkeleyHumanoidEnv(mjx_env.MjxEnv):
+class BerkeleyHumanoidEnv(mjx_env.MjxEnv): # Ist mjx_env.MjxEnv übernehmbar?
   """Base class for Berkeley Humanoid environments."""
 
   def __init__(
       self,
       xml_path: str,
-      config: config_dict.ConfigDict,
+      config: config_dict.ConfigDict,  # Konfiguration für die Umgebung
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ) -> None:
     super().__init__(config, config_overrides)
 
     self._mj_model = mujoco.MjModel.from_xml_string(
-        epath.Path(xml_path).read_text(), assets=get_assets()
+        epath.Path(xml_path).read_text(), assets=get_assets() # Können die Assets für Wolfgang genutzt werden?
     )
     self._mj_model.opt.timestep = self.sim_dt
 
     self._mj_model.vis.global_.offwidth = 3840
     self._mj_model.vis.global_.offheight = 2160
 
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model) # Umwandlung in ein MJX-Modell -> Nutzung von JAX
     self._xml_path = xml_path
 
   # Sensor readings.
