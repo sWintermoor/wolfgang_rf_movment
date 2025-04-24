@@ -40,6 +40,10 @@ from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spo
 from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 
+# Joystick und Randomizer für Wolfgang
+from mujoco_playground._src.locomotion.wolfgang import joystick as wolfgang_joystick
+from mujoco_playground._src.locomotion.wolfgang import randomize as wolfgang_randomize
+
 _envs = {
     "BarkourJoystick": barkour_joystick.Joystick,
     "BerkeleyHumanoidJoystickFlatTerrain": functools.partial(
@@ -79,6 +83,8 @@ _envs = {
     "T1JoystickRoughTerrain": functools.partial(
         t1_joystick.Joystick, task="rough_terrain"
     ),
+    # Wolfgang
+    "WolfgangJoystick": wolfgang_joystick.Joystick,
 }
 
 _cfgs = {
@@ -104,6 +110,8 @@ _cfgs = {
     "SpotJoystickGaitTracking": spot_joystick_gait_tracking.default_config,
     "T1JoystickFlatTerrain": t1_joystick.default_config,
     "T1JoystickRoughTerrain": t1_joystick.default_config,
+    # Wolfgang
+    "WolfgangJoystick": wolfgang_joystick.default_config,
 }
 
 _randomizer = {
@@ -122,6 +130,8 @@ _randomizer = {
     "Go1Footstand": go1_randomize.domain_randomize,
     "T1JoystickFlatTerrain": t1_randomize.domain_randomize,
     "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
+    # Wolfgang
+    "Wolfgang": wolfgang_randomize.domain_randomize,
 }
 
 
