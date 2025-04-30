@@ -102,30 +102,32 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
 
   def __init__(
       self,
-      task: str = "flat_terrain",
-      config: config_dict.ConfigDict = default_config(),
-      config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
+      task: str = "flat_terrain", # Für Wolfgang entfernen
+      config: config_dict.ConfigDict = default_config(), # Übernehmbar
+      config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None, # Übernehmbar
   ):
-    super().__init__(
-        xml_path=consts.task_to_xml(task).as_posix(),
+    super().__init__( # BerkeleyHumanoidEnv wird aufgerufen -> Analysieren
+        xml_path=consts.task_to_xml(task).as_posix(), # Wie werden die XML-Dateien verwendet
         config=config,
         config_overrides=config_overrides,
     )
     self._post_init()
 
   def _post_init(self) -> None:
-    self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
+    # XML-Datei überprüfen, ob entsprechende Eigenschaften vorhanden sind, z.B. _mj_model.Eigenschaft
+    self._init_q = jp.array(self._mj_model.keyframe("home").qpos) # Keyframe ist ein gespeicherter Zustand des Modells -> Standardposition (Für Wolfgang?)
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
     # Note: First joint is freejoint.
-    self._lowers, self._uppers = self.mj_model.jnt_range[1:].T
+    self._lowers, self._uppers = self.mj_model.jnt_range[1:].T # Erhalten untere und obere Grenze 
+    # Berechnen wieche Grenzen -> Übernehmbar
     c = (self._lowers + self._uppers) / 2
     r = self._uppers - self._lowers
     self._soft_lowers = c - 0.5 * r * self._config.soft_joint_pos_limit_factor
     self._soft_uppers = c + 0.5 * r * self._config.soft_joint_pos_limit_factor
 
     hip_indices = []
-    hip_joint_names = ["HR", "HAA"]
+    hip_joint_names = ["HR", "HAA"] # HR: Hüftrotation, HAA: Hüftadaption/-abduktion
     for side in ["LL", "LR"]:
       for joint_name in hip_joint_names:
         hip_indices.append(
@@ -135,9 +137,10 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
 
     knee_indices = []
     for side in ["LL", "LR"]:
-      knee_indices.append(self._mj_model.joint(f"{side}_KFE").qposadr - 7)
+      knee_indices.append(self._mj_model.joint(f"{side}_KFE").qposadr - 7) # Erste sieben Einträge gehören der Basisbewegung an, die Restlichen den Gelenkwinkel
     self._knee_indices = jp.array(knee_indices)
 
+    # Gewichtsvektoren für die Gelenke, Übernehmbar?
     # fmt: off
     self._weights = jp.array([
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # left leg.
@@ -145,10 +148,12 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     ])
     # fmt: on
 
+    # Speichert IDs und Massen für den Torso und die IMU (Inertial Measurement Unit).
     self._torso_body_id = self._mj_model.body(consts.ROOT_BODY).id
     self._torso_mass = self._mj_model.body_subtreemass[self._torso_body_id]
     self._site_id = self._mj_model.site("imu").id
 
+    # Speichert IDs für die Füße und den Boden.
     self._feet_site_id = np.array(
         [self._mj_model.site(name).id for name in consts.FEET_SITES]
     )
@@ -159,14 +164,15 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
 
     foot_linvel_sensor_adr = []
     for site in consts.FEET_SITES:
-      sensor_id = self._mj_model.sensor(f"{site}_global_linvel").id
-      sensor_adr = self._mj_model.sensor_adr[sensor_id]
-      sensor_dim = self._mj_model.sensor_dim[sensor_id]
+      sensor_id = self._mj_model.sensor(f"{site}_global_linvel").id # ID
+      sensor_adr = self._mj_model.sensor_adr[sensor_id] # Startindex
+      sensor_dim = self._mj_model.sensor_dim[sensor_id] # Dimension
       foot_linvel_sensor_adr.append(
           list(range(sensor_adr, sensor_adr + sensor_dim))
       )
     self._foot_linvel_sensor_adr = jp.array(foot_linvel_sensor_adr)
 
+    # Hinzufügen von Rauschen in den Gelenkstellungen
     qpos_noise_scale = np.zeros(12)
     hip_ids = [0, 1, 2, 6, 7, 8]
     kfe_ids = [3, 9]
@@ -178,44 +184,50 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     qpos_noise_scale[faa_ids] = self._config.noise_config.scales.faa_pos
     self._qpos_noise_scale = jp.array(qpos_noise_scale)
 
+  # Setzen Roboter in einen zufälligen Startzustand
   def reset(self, rng: jax.Array) -> mjx_env.State:
-    qpos = self._init_q
-    qvel = jp.zeros(self.mjx_model.nv)
+    qpos = self._init_q # Gelenkpositionen auf Startwerte setzen
+    qvel = jp.zeros(self.mjx_model.nv) # Gelenkgeschwindigkeiten auf 0 setzen
 
     # x=+U(-0.5, 0.5), y=+U(-0.5, 0.5), yaw=U(-3.14, 3.14).
     rng, key = jax.random.split(rng)
-    dxy = jax.random.uniform(key, (2,), minval=-0.5, maxval=0.5)
-    qpos = qpos.at[0:2].set(qpos[0:2] + dxy)
+    dxy = jax.random.uniform(key, (2,), minval=-0.5, maxval=0.5) # Zufallszahlen für x und y erzeugt
+    qpos = qpos.at[0:2].set(qpos[0:2] + dxy) # Werden auf die Gelenkpositionen addiert
+    # Zufällige Drehung um die Z-Achse
     rng, key = jax.random.split(rng)
     yaw = jax.random.uniform(key, (1,), minval=-3.14, maxval=3.14)
     quat = math.axis_angle_to_quat(jp.array([0, 0, 1]), yaw)
     new_quat = math.quat_mul(qpos[3:7], quat)
     qpos = qpos.at[3:7].set(new_quat)
 
+    # Zufällige Gelenkpositionen 
     # qpos[7:]=*U(0.5, 1.5)
     rng, key = jax.random.split(rng)
     qpos = qpos.at[7:].set(
         qpos[7:] * jax.random.uniform(key, (12,), minval=0.5, maxval=1.5)
     )
 
+    # Zufällige Gelenkgeschwindigkeiten
     # d(xyzrpy)=U(-0.5, 0.5)
     rng, key = jax.random.split(rng)
     qvel = qvel.at[0:6].set(
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
+    # Erstellen MuJoCo-Datenobjekt mit den initialien Zuständen
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
 
+    # Zufällige Gangfrequenz (gait_freq) + Phaseninkrement (phase_dt)
     # Phase, freq=U(1.0, 1.5)
     rng, key = jax.random.split(rng)
     gait_freq = jax.random.uniform(key, (1,), minval=1.25, maxval=1.5)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
-    phase = jp.array([0, jp.pi])
+    phase = jp.array([0, jp.pi]) # Startphase für die Füße
 
     rng, cmd_rng = jax.random.split(rng)
-    cmd = self.sample_command(cmd_rng)
+    cmd = self.sample_command(cmd_rng) # Zufälliger Steuerbefehl
 
-    # Sample push interval.
+    # Sample push interval. -> Stoßintervall
     rng, push_rng = jax.random.split(rng)
     push_interval = jax.random.uniform(
         push_rng,
@@ -243,6 +255,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         "push_interval_steps": push_interval_steps,
     }
 
+    # Ab hier
     metrics = {}
     for k in self._config.reward_config.scales.keys():
       metrics[f"reward/{k}"] = jp.zeros(())

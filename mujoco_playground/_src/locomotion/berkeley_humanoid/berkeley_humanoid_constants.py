@@ -22,17 +22,17 @@ ROOT_PATH = mjx_env.ROOT_PATH / "locomotion" / "berkeley_humanoid"
 FEET_ONLY_FLAT_TERRAIN_XML = (
     ROOT_PATH / "xmls" / "scene_mjx_feetonly_flat_terrain.xml"
 )
-FEET_ONLY_ROUGH_TERRAIN_XML = (
+FEET_ONLY_ROUGH_TERRAIN_XML = ( # Für Wolfgang gibt es nur Flat-Terrain
     ROOT_PATH / "xmls" / "scene_mjx_feetonly_rough_terrain.xml"
 )
 
-
-def task_to_xml(task_name: str) -> epath.Path:
+def task_to_xml(task_name: str) -> epath.Path: 
   return {
       "flat_terrain": FEET_ONLY_FLAT_TERRAIN_XML,
       "rough_terrain": FEET_ONLY_ROUGH_TERRAIN_XML,
   }[task_name]
 
+# Restliche Parameter übernehmbar?
 
 FEET_SITES = [
     "l_foot",
