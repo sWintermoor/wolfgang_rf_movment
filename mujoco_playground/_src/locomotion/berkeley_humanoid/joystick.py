@@ -236,11 +236,12 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     )
     push_interval_steps = jp.round(push_interval / self.dt).astype(jp.int32)
 
+    # Sollte übernehmbar sein
     info = {
         "rng": rng,
         "step": 0,
         "command": cmd,
-        "last_act": jp.zeros(self.mjx_model.nu),
+        "last_act": jp.zeros(self.mjx_model.nu), # mjx_model.nu -> Anzahl der Aktuatoren
         "last_last_act": jp.zeros(self.mjx_model.nu),
         "motor_targets": jp.zeros(self.mjx_model.nu),
         "feet_air_time": jp.zeros(2),
@@ -255,47 +256,55 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         "push_interval_steps": push_interval_steps,
     }
 
-    # Ab hier
+    # Erstellen Belohnungskomponenten für einzelne Metriken
     metrics = {}
     for k in self._config.reward_config.scales.keys():
       metrics[f"reward/{k}"] = jp.zeros(())
-    metrics["swing_peak"] = jp.zeros(())
+    metrics["swing_peak"] = jp.zeros(()) # Maximale Fußhöhe
 
     contact = jp.array([
-        geoms_colliding(data, geom_id, self._floor_geom_id)
+        geoms_colliding(data, geom_id, self._floor_geom_id) # Überprüfen, ob Füße den Boden berühren; geom_id -> ID des Fußes, self._floor_geom_id -> ID des Bodens
         for geom_id in self._feet_geom_id
     ])
     obs = self._get_obs(data, info, contact)
-    reward, done = jp.zeros(2)
+    reward, done = jp.zeros(2) # Belohnung und Ende der Episode auf 0 setzen
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
+  # Simulieren einen Zeitschritt
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     state.info["rng"], push1_rng, push2_rng = jax.random.split(
         state.info["rng"], 3
     )
-    push_theta = jax.random.uniform(push1_rng, maxval=2 * jp.pi)
+    # Stoß -> Übernehmbar
+    push_theta = jax.random.uniform(push1_rng, maxval=2 * jp.pi) # Stoßrichtung als Winkel
+    # Zufällige Stärke des Stoßes
     push_magnitude = jax.random.uniform(
         push2_rng,
         minval=self._config.push_config.magnitude_range[0],
         maxval=self._config.push_config.magnitude_range[1],
     )
-    push = jp.array([jp.cos(push_theta), jp.sin(push_theta)])
+    push = jp.array([jp.cos(push_theta), jp.sin(push_theta)]) # Stoßrichtung als x- und y-Komponente
+    # Aktivieren Stoß, falls bestimmte Anzahl von Schritten erreicht ist
     push *= (
         jp.mod(state.info["push_step"] + 1, state.info["push_interval_steps"])
         == 0
     )
-    push *= self._config.push_config.enable
+    push *= self._config.push_config.enable # Aktivieren Stoß, falls entsprechender Konfigurationsparameter aktiviert ist
+    # Stoß wird Ausgeführt -> Aktualisieren die Gelenkgeschwindigkeiten
     qvel = state.data.qvel
     qvel = qvel.at[:2].set(push * push_magnitude + qvel[:2])
     data = state.data.replace(qvel=qvel)
     state = state.replace(data=data)
 
-    motor_targets = self._default_pose + action * self._config.action_scale
+    # Sollte übernehmbar sein
+    motor_targets = self._default_pose + action * self._config.action_scale # Berechnen Zielposition der Gelenke
+    # Simulationsschritt ausführen
     data = mjx_env.step(
         self.mjx_model, state.data, motor_targets, self.n_substeps
     )
     state.info["motor_targets"] = motor_targets
 
+    # Übernehmbar -> Berechnen maximale Fußhöhe und Dauer der Füße in der Luft
     contact = jp.array([
         geoms_colliding(data, geom_id, self._floor_geom_id)
         for geom_id in self._feet_geom_id
@@ -303,13 +312,15 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt
     state.info["feet_air_time"] += self.dt
-    p_f = data.site_xpos[self._feet_site_id]
-    p_fz = p_f[..., -1]
+    p_f = data.site_xpos[self._feet_site_id] # Extrahieren die Positionen der Sites, die den Füßen zugeordnet sind
+    p_fz = p_f[..., -1] # Extrahieren die z-Koordinaten
     state.info["swing_peak"] = jp.maximum(state.info["swing_peak"], p_fz)
 
+    # Übernehmbar
     obs = self._get_obs(data, state.info, contact)
     done = self._get_termination(data)
 
+    # Übernehmbar? -> _get_reward muss überprüft werden
     rewards = self._get_reward(
         data, action, state.info, state.metrics, done, first_contact, contact
     )
@@ -318,6 +329,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     }
     reward = jp.clip(sum(rewards.values()) * self.dt, 0.0, 10000.0)
 
+    # Sollte übernehmbar sein (reward überprüfen) -> Aktualisieren Parameter
     state.info["push"] = push
     state.info["step"] += 1
     state.info["push_step"] += 1
@@ -347,8 +359,9 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     state = state.replace(data=data, obs=obs, reward=reward, done=done)
     return state
 
+  # Übernehmbar -> Überpüft, ob Simulation beendet werden soll
   def _get_termination(self, data: mjx.Data) -> jax.Array:
-    fall_termination = self.get_gravity(data)[-1] < 0.0
+    fall_termination = self.get_gravity(data)[-1] < 0.0 # Überprüfen, ob der Roboter gefallen ist
     return (
         fall_termination | jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     )
@@ -356,7 +369,9 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
   def _get_obs(
       self, data: mjx.Data, info: dict[str, Any], contact: jax.Array
   ) -> mjx_env.Observation:
-    gyro = self.get_gyro(data)
+    # Fügen Rauschen hinzu
+    # Übernehmbar
+    gyro = self.get_gyro(data) # Ausrichtung und Winkelgeschwindigkeit -> Methode in base.py, übernehmbar?
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_gyro = (
         gyro
@@ -365,6 +380,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         * self._config.noise_config.scales.gyro
     )
 
+    # Übernehmbar
     gravity = data.site_xmat[self._site_id].T @ jp.array([0, 0, -1])
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_gravity = (
@@ -374,6 +390,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         * self._config.noise_config.scales.gravity
     )
 
+    # Übernehmbar
     joint_angles = data.qpos[7:]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_angles = (
@@ -383,6 +400,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         * self._qpos_noise_scale
     )
 
+    # Übernehmbar
     joint_vel = data.qvel[6:]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_vel = (
@@ -392,10 +410,12 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         * self._config.noise_config.scales.joint_vel
     )
 
+    # Übernehmbar
     cos = jp.cos(info["phase"])
     sin = jp.sin(info["phase"])
-    phase = jp.concatenate([cos, sin])
+    phase = jp.concatenate([cos, sin]) # Überführung der Gangphase in Sinus- und Cosinuswerte (zyklische Darstellung) -> Eindeutigkeit durch Kombination aus Sinus und Cosinus gewährleistet
 
+    # Übernehmbar
     linvel = self.get_local_linvel(data)
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_linvel = (
@@ -405,22 +425,24 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         * self._config.noise_config.scales.linvel
     )
 
+    # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
         noisy_linvel,  # 3
         noisy_gyro,  # 3
         noisy_gravity,  # 3
         info["command"],  # 3
-        noisy_joint_angles - self._default_pose,  # 12
+        noisy_joint_angles - self._default_pose,  # 12 Gelenkwindel relativ zur Standardposition
         noisy_joint_vel,  # 12
-        info["last_act"],  # 12
+        info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase,
     ])
 
-    accelerometer = self.get_accelerometer(data)
-    global_angvel = self.get_global_angvel(data)
-    feet_vel = data.sensordata[self._foot_linvel_sensor_adr].ravel()
-    root_height = data.qpos[2]
+    accelerometer = self.get_accelerometer(data) # Übernehmbar  -> base.py anpassen
+    global_angvel = self.get_global_angvel(data) # Übernehmbar -> base.py anpassen
+    feet_vel = data.sensordata[self._foot_linvel_sensor_adr].ravel() # Übernehmbar
+    root_height = data.qpos[2] # Höhe des Roboters über dem Boden (z-Koordinate) -> Übernehmbar
 
+    # Übernehmbar -> state + glatte Werte + weitere Werte
     privileged_state = jp.hstack([
         state,
         gyro,  # 3
@@ -442,7 +464,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         "privileged_state": privileged_state,
     }
 
-  def _get_reward(
+  def _get_reward( # Ab hier
       self,
       data: mjx.Data,
       action: jax.Array,
@@ -502,6 +524,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
 
   # Tracking rewards.
 
+  # Belohnung für die Geschwindigkeit -> Übernehmbar? -> tracking_sigma richtig gewählt?
   def _reward_tracking_lin_vel(
       self,
       commands: jax.Array,
@@ -510,6 +533,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
     return jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
 
+  # Belohnung für die Winkelgeschwindigkeit -> Übernehmbar? -> tracking_sigma richtig gewählt?
   def _reward_tracking_ang_vel(
       self,
       commands: jax.Array,
@@ -518,7 +542,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     ang_vel_error = jp.square(commands[2] - ang_vel[2])
     return jp.exp(-ang_vel_error / self._config.reward_config.tracking_sigma)
 
-  # Base-related rewards.
+  # Base-related rewards. Bestrafung für unerwünschte Bewegungen -> Übernehmbar? -> Richtige Parameter?
 
   def _cost_lin_vel_z(self, global_linvel) -> jax.Array:
     return jp.square(global_linvel[2])
@@ -534,13 +558,13 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
         base_height - self._config.reward_config.base_height_target
     )
 
-  # Energy related rewards.
+  # Energy related rewards. -> Bestrafung für hohe Energieverbräuche -> Übernehmbar? -> Richtige Parameter?
 
   def _cost_torques(self, torques: jax.Array) -> jax.Array:
     return jp.sum(jp.abs(torques))
 
   def _cost_energy(
-      self, qvel: jax.Array, qfrc_actuator: jax.Array
+      self, qvel: jax.Array, qfrc_actuator: jax.Array # qfrc_actuator -> Kräfte, die von den Aktuatoren erzeugt werden
   ) -> jax.Array:
     return jp.sum(jp.abs(qvel) * jp.abs(qfrc_actuator))
 
@@ -551,11 +575,11 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
     c1 = jp.sum(jp.square(act - last_act))
     return c1
 
-  # Other rewards.
+  # Other rewards. Übernehmbar? -> Richtige Parameter?
 
   def _cost_joint_pos_limits(self, qpos: jax.Array) -> jax.Array:
-    out_of_limits = -jp.clip(qpos - self._soft_lowers, None, 0.0)
-    out_of_limits += jp.clip(qpos - self._soft_uppers, 0.0, None)
+    out_of_limits = -jp.clip(qpos - self._soft_lowers, None, 0.0) # Negative Werte bleiben erhalten, positive Werte werden auf 0 gesetzt
+    out_of_limits += jp.clip(qpos - self._soft_uppers, 0.0, None) # Positive Werte bleiben erhalten, negative Werte werden auf 0 gesetzt
     return jp.sum(out_of_limits)
 
   def _cost_stand_still(
