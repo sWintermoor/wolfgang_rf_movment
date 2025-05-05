@@ -97,7 +97,7 @@ def default_config() -> config_dict.ConfigDict:
   )
 
 
-class Joystick(wolfgang_base.BerkeleyHumanoidEnv):
+class Joystick(wolfgang_base.WolfgangEnv):
   """Track a joystick command."""
 
   def __init__(
@@ -106,7 +106,7 @@ class Joystick(wolfgang_base.BerkeleyHumanoidEnv):
       config: config_dict.ConfigDict = default_config(), # Übernehmbar
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None, # Übernehmbar
   ):
-    super().__init__( # BerkeleyHumanoidEnv wird aufgerufen -> Analysieren
+    super().__init__( # WolfgangEnv wird aufgerufen -> Analysieren
         xml_path=consts.task_to_xml(task).as_posix(), # Wie werden die XML-Dateien verwendet
         config=config,
         config_overrides=config_overrides,
