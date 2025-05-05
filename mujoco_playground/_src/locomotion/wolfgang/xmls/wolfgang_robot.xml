@@ -19,6 +19,9 @@
       <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50"/>
     </default>
   </default>
+
+  
+
   <compiler angle="radian" autolimits="true"/>
   <asset>
     <mesh name="mx-64-body" file="mx-64-body.stl"/>
@@ -77,6 +80,7 @@
   </asset>
   <worldbody>
     <body name="torso" pos="0.0 0.0 0.4274" quat="0.999 0.0 0.05 0.0">
+    <site name="imu"/>
       <geom pos="-0.0015 0.053 0.2035" quat="9.38184e-07 -0.707105 9.38187e-07 0.707108" type="mesh" mesh="mx-64-body" class="visual"/>
     <geom size="0.0201 0.0205 0.03055" pos="0.01605 0.053 0.2035" quat="9.38184e-07 -0.707105 9.38187e-07 0.707108" type="box" rgba="0.647059 0.647059 0.647059 1" class="collision"/>
     <geom pos="-0.0015 -0.053 0.2035" quat="0.707105 0 -0.707108 0" type="mesh" mesh="mx-64-body" class="visual"/>
@@ -609,4 +613,22 @@
   <position joint="HeadPan" name="HeadPan" class="mx64"/>
   <position joint="HeadTilt" name="HeadTilt" class="mx64"/>
 </actuator>
+
+  <sensor>
+    <gyro site="imu" name="gyro"/>
+    <velocimeter site="imu" name="local_linvel"/>
+    <accelerometer site="imu" name="accelerometer"/>
+    <framezaxis objtype="site" objname="imu" name="upvector"/>
+    <framexaxis objtype="site" objname="imu" name="forwardvector"/>
+    <framelinvel objtype="site" objname="imu" name="global_linvel"/>
+    <frameangvel objtype="site" objname="imu" name="global_angvel"/>
+    <framepos objtype="site" objname="imu" name="position"/>
+    <framequat objtype="site" objname="imu" name="orientation"/>
+    <framelinvel objtype="body" objname="l_foot" name="l_foot_global_linvel"/>
+    <framelinvel objtype="body" objname="r_foot" name="r_foot_global_linvel"/>
+    <framexaxis objtype="body" objname="l_foot" name="l_foot_upvector"/>
+    <framexaxis objtype="body" objname="r_foot" name="r_foot_upvector"/>
+    <framepos objtype="body" objname="l_foot" name="l_foot_pos"/>
+    <framepos objtype="body" objname="r_foot" name="r_foot_pos"/>
+  </sensor>
 </mujoco>
