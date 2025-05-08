@@ -23,13 +23,21 @@ FEET_ONLY_FLAT_TERRAIN_XML = (
     ROOT_PATH / "xmls" / "wolfgang_scene.xml"
 )
 
-# Restliche Parameter übernehmbar?
+# Currently only body elements for l_foot/r_foot Wolfgang -> Reasonable to create site and geoms for
+# these body elements, because in joystick.py we use methods that are specifically designed for working 
+# with sites and geoms  
+# -> site: Usage in joystick: Using for food position; 
+# TODO: Create a site in l_foot/r_foot with pos arguments, size(?) e.g. 'l_foot_size' -> change objtype to 'size'
+# -> geom: Usage in joystick: Collision detection (contype and conaffinity are important for collision detection); 
+# TODO: Add names for every geom in l_foot/r_foot with class='collision' e.g.: l_foot1, l_foot2, l_foot3... 
 
+# TODO: Create new site called l_foot_size and r_foot_size (see above)
 FEET_SITES = [ # TODO: now this and the geoms are the same... idk if thats okay
     "l_foot",
     "r_foot",
 ]
 
+# TODO: Add the specific geoms (see above)
 LEFT_FEET_GEOMS = [
     "l_foot",
 ]

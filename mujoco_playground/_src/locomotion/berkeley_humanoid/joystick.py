@@ -106,7 +106,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
       config: config_dict.ConfigDict = default_config(), # Übernehmbar
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None, # Übernehmbar
   ):
-    super().__init__( # BerkeleyHumanoidEnv wird aufgerufen -> Analysieren
+    super().__init__( # BerkeleyHumanoidEnv (base.py) wird aufgerufen -> Analysieren
         xml_path=consts.task_to_xml(task).as_posix(), # Wie werden die XML-Dateien verwendet
         config=config,
         config_overrides=config_overrides,
@@ -120,7 +120,7 @@ class Joystick(berkeley_humanoid_base.BerkeleyHumanoidEnv):
 
     # Note: First joint is freejoint.
     self._lowers, self._uppers = self.mj_model.jnt_range[1:].T # Erhalten untere und obere Grenze 
-    # Berechnen wieche Grenzen -> Übernehmbar
+    # Berechnen weiche Grenzen -> Übernehmbar
     c = (self._lowers + self._uppers) / 2
     r = self._uppers - self._lowers
     self._soft_lowers = c - 0.5 * r * self._config.soft_joint_pos_limit_factor
