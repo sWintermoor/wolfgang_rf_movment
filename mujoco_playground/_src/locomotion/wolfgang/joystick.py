@@ -29,6 +29,8 @@ from mujoco_playground._src.collision import geoms_colliding
 from mujoco_playground._src.locomotion.wolfgang import base as wolfgang_base
 from mujoco_playground._src.locomotion.wolfgang import wolfgang_constants as consts
 
+#TODO: self._init_q = jp.array(self._mj_model.keyframe("home").qpos) -> We have to add a keyframe called home 
+# under wolfgang_scene
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
@@ -131,7 +133,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     for side in ["L", "R"]: 
       for joint_name in hip_joint_names:
         hip_indices.append(
-            self._mj_model.joint(f"{joint_name}{side}").qposadr - 7
+            self._mj_model.joint(f"{side}{joint_name}").qposadr - 7
         ) 
     self._hip_indices = jp.array(hip_indices)
 

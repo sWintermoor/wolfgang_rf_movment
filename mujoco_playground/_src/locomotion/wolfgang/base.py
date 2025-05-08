@@ -30,6 +30,9 @@ from mujoco_playground._src.locomotion.wolfgang import wolfgang_constants as con
 def get_assets() -> Dict[str, bytes]:
   assets = {}
   mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml") 
+  #TODO: Comment out next lines, because we don't have any assets for Wolfgang
+  #TODO: I think we need mesh-files for Wolfgang (.stl files). Create a file called wolfgang under 
+  # external_deps/mujoco_menagerie and add mesh files under a file called assets
   mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls" / "assets") # Gibt es sowas für Wolfgang? -> png-Dateien
   path = mjx_env.MENAGERIE_PATH / "wolfgang" # An Wolfgang anpassen
   mjx_env.update_assets(assets, path, "*.xml")
