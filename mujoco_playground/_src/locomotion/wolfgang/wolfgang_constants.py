@@ -46,6 +46,12 @@ RIGHT_FEET_GEOMS = [
     "r_foot",
 ]
 
+def task_to_xml(task_name: str) -> epath.Path: 
+  return {
+      "flat_terrain": FEET_ONLY_FLAT_TERRAIN_XML,
+      "rough_terrain": FEET_ONLY_FLAT_TERRAIN_XML, # TODO: change later
+  }[task_name]
+
 FEET_GEOMS = LEFT_FEET_GEOMS + RIGHT_FEET_GEOMS
 
 FEET_POS_SENSOR = [f"{site}_pos" for site in FEET_SITES]
