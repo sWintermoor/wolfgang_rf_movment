@@ -635,6 +635,21 @@
     <frameangvel objtype="site" objname="imu" name="global_angvel"/>
     <framepos objtype="site" objname="imu" name="position"/>
     <framequat objtype="site" objname="imu" name="orientation"/>
+
+    <framezaxis objtype="site" objname="l_foot_site" name="l_foot_site_upvector"/>
+    <framexaxis objtype="site" objname="l_foot_site" name="l_foot_site_forwardvector"/>
+    <framelinvel objtype="site" objname="l_foot_site" name="l_foot_site_global_linvel"/>
+    <frameangvel objtype="site" objname="l_foot_site" name="l_foot_site_global_angvel"/>
+    <framepos objtype="site" objname="l_foot_site" name="l_foot_site_position"/>
+    <framequat objtype="site" objname="l_foot_site" name="l_foot_site_orientation"/>
+
+    <framezaxis objtype="site" objname="r_foot_site" name="r_foot_site_upvector"/>
+    <framexaxis objtype="site" objname="r_foot_site" name="r_foot_site_forwardvector"/>
+    <framelinvel objtype="site" objname="r_foot_site" name="r_foot_site_global_linvel"/>
+    <frameangvel objtype="site" objname="r_foot_site" name="r_foot_site_global_angvel"/>
+    <framepos objtype="site" objname="r_foot_site" name="r_foot_site_position"/>
+    <framequat objtype="site" objname="r_foot_site" name="r_foot_site_orientation"/>
+
     <framelinvel objtype="body" objname="l_foot" name="l_foot_global_linvel"/>
     <framelinvel objtype="body" objname="r_foot" name="r_foot_global_linvel"/>
     <framexaxis objtype="body" objname="l_foot" name="l_foot_upvector"/>
