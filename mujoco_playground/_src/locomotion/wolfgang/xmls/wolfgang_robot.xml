@@ -7,7 +7,7 @@
       <geom material="black" contype="0" conaffinity="0" group="2"/>
     </default>
     <default class="mx106">
-      <joint damping="1.084" armature="0.045" frictionloss="2.55"/>
+      <joint damping="1.084" armature="0.045" />
       <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50"/>
     </default>
     <default class="mx64">
