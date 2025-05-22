@@ -246,9 +246,9 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "last_act": jp.zeros(self.mjx_model.nu), # mjx_model.nu -> Anzahl der Aktuatoren
         "last_last_act": jp.zeros(self.mjx_model.nu),
         "motor_targets": jp.zeros(self.mjx_model.nu),
-        "feet_air_time": jp.zeros(2),
-        "last_contact": jp.zeros(2, dtype=bool),
-        "swing_peak": jp.zeros(2),
+        "feet_air_time": jp.zeros(82),
+        "last_contact": jp.zeros(82, dtype=bool),
+        "swing_peak": jp.zeros(82),
         # Phase related.
         "phase_dt": phase_dt,
         "phase": phase,
@@ -316,6 +316,9 @@ class Joystick(wolfgang_base.WolfgangEnv):
     state.info["feet_air_time"] += self.dt
     p_f = data.site_xpos[self._feet_site_id] # Extrahieren die Positionen der Sites, die den Füßen zugeordnet sind
     p_fz = p_f[..., -1] # Extrahieren die z-Koordinaten
+    print("##################")
+    print(p_fz)
+    print(p_fz.shape)
     state.info["swing_peak"] = jp.maximum(state.info["swing_peak"], p_fz)
 
     # Übernehmbar
