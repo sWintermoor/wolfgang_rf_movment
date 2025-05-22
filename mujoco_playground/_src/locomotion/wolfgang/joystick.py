@@ -145,8 +145,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # Gewichtsvektoren für die Gelenke, Übernehmbar?
     # fmt: off
     self._weights = jp.array([
-        1.0, 1.0, 0.01, 0.01, 1.0, 1.0,
-        1.0, 1.0,
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # left leg.
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # right leg.
     ])
@@ -177,7 +175,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._foot_linvel_sensor_adr = jp.array(foot_linvel_sensor_adr)
 
     # Hinzufügen von Rauschen in den Gelenkstellungen
-    qpos_noise_scale = np.zeros(20)
+    qpos_noise_scale = np.zeros(12)
     hip_ids = [0, 1, 2, 6, 7, 8]
     kfe_ids = [3, 9]
     ffe_ids = [4, 10]
@@ -208,7 +206,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # qpos[7:]=*U(0.5, 1.5)
     rng, key = jax.random.split(rng)
     qpos = qpos.at[7:].set(
-        qpos[7:] * jax.random.uniform(key, (20,), minval=0.5, maxval=1.5)
+        qpos[7:] * jax.random.uniform(key, (12,), minval=0.5, maxval=1.5)
     )
 
     # Zufällige Gelenkgeschwindigkeiten

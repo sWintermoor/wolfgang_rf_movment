@@ -1,5 +1,5 @@
 <mujoco model="wolfgang scene">
-  <include file="wolfgang_robot.xml"/>
+  <include file="wolfgang_robot_simple.xml"/>
 
   <statistic center="0 0 0.2" extent="0.6"/>
 
