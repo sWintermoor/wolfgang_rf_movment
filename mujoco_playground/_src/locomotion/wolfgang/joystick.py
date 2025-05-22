@@ -36,7 +36,7 @@ def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02, # Übernehmbar
       sim_dt=0.002, # Übernehmbar
-      episode_length=1000, # Übernehmbar
+      episode_length=1, # Übernehmbar
       action_repeat=1, # Übernehmbar
       action_scale=0.5, # Übernehmbar
       history_len=1, # Übernehmbar
@@ -175,7 +175,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._foot_linvel_sensor_adr = jp.array(foot_linvel_sensor_adr)
 
     # Hinzufügen von Rauschen in den Gelenkstellungen
-    qpos_noise_scale = np.zeros(12)
+    qpos_noise_scale = np.zeros(20)
     hip_ids = [0, 1, 2, 6, 7, 8]
     kfe_ids = [3, 9]
     ffe_ids = [4, 10]
@@ -206,7 +206,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # qpos[7:]=*U(0.5, 1.5)
     rng, key = jax.random.split(rng)
     qpos = qpos.at[7:].set(
-        qpos[7:] * jax.random.uniform(key, (12,), minval=0.5, maxval=1.5)
+        qpos[7:] * jax.random.uniform(key, (20,), minval=0.5, maxval=1.5)
     )
 
     # Zufällige Gelenkgeschwindigkeiten
@@ -403,7 +403,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Übernehmbar
-    joint_vel = data.qvel[6:]
+    joint_vel = data.qvel[15:]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_vel = (
         joint_vel
