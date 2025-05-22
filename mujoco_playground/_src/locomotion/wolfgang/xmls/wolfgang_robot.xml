@@ -602,25 +602,28 @@
   </body>
   <light name="spotlight" mode="targetbodycom" target="torso" pos="0 -1 2"/>
 </worldbody>
+
 <actuator>
   <position joint="RShoulderPitch" name="RShoulderPitch" class="mx106"/>
   <position joint="RShoulderRoll" name="RShoulderRoll" class="mx106"/>
   <position joint="RElbow" name="RElbow" class="mx64"/>
-  <position joint="LShoulderPitch" name="LShoulderPitch" class="mx106"/>
-  <position joint="LShoulderRoll" name="LShoulderRoll" class="mx106"/>
-  <position joint="LElbow" name="LElbow" class="mx64"/>
   <position joint="RHipYaw" name="RHipYaw" class="mx106"/>
   <position joint="RHipRoll" name="RHipRoll" class="mx106"/>
   <position joint="RHipPitch" name="RHipPitch" class="mx106"/>
   <position joint="RKnee" name="RKnee" class="xh-540"/>
   <position joint="RAnklePitch" name="RAnklePitch" class="mx106"/>
   <position joint="RAnkleRoll" name="RAnkleRoll" class="mx106"/>
+
+  <position joint="LShoulderPitch" name="LShoulderPitch" class="mx106"/>
+  <position joint="LShoulderRoll" name="LShoulderRoll" class="mx106"/>
+  <position joint="LElbow" name="LElbow" class="mx64"/>
   <position joint="LHipYaw" name="LHipYaw" class="mx106"/>
   <position joint="LHipRoll" name="LHipRoll" class="mx106"/>
   <position joint="LHipPitch" name="LHipPitch" class="mx106"/>
   <position joint="LKnee" name="LKnee" class="xh-540"/>
   <position joint="LAnklePitch" name="LAnklePitch" class="mx106"/>
   <position joint="LAnkleRoll" name="LAnkleRoll" class="mx106"/>
+
   <position joint="HeadPan" name="HeadPan" class="mx64"/>
   <position joint="HeadTilt" name="HeadTilt" class="mx64"/>
 </actuator>
