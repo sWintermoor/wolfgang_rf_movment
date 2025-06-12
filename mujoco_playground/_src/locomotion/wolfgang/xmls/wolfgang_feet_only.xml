@@ -44,7 +44,6 @@
 
   <asset>
     <material name="metal" rgba=".3 .3 .3 1"/>
-    <-- TODO: group meshes to bigger stls -->
     <mesh name="mx-64-body" file="mx-64-body.stl"/>
     <mesh name="torso" file="torso.stl"/>
     <mesh name="sea_connector" file="sea_connector.stl"/>
@@ -197,6 +196,7 @@
         </body>
       </body>
     </body>
+        </body>
   </worldbody>
 
 <actuator>

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <mujoco model="wolfgang">
   <default>
     <default class="collision">
