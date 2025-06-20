@@ -39,11 +39,11 @@ FEET_SITES = [ # TODO: now this and the geoms are the same... idk if thats okay
 
 # TODO: Add the specific geoms (see above)
 LEFT_FEET_GEOMS = [
-    "l_foot_collision_6", # l foot sole
+    "l_foot_geom", # l foot sole
 ]
 
 RIGHT_FEET_GEOMS = [
-    "r_foot_collision_18", # r foot sole
+    "r_foot_geom", # r foot sole
 ]
 
 def task_to_xml(task_name: str) -> epath.Path: 
