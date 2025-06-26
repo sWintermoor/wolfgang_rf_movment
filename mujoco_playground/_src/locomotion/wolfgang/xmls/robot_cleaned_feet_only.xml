@@ -1,23 +1,27 @@
 <?xml version='1.0' encoding='utf-8'?>
+
 <mujoco model="wolfgang">
+  <option iterations="3" ls_iterations="5" timestep="0.002" integrator="Euler">
+    <flag eulerdamp="disable"/>
+  </option>
   <default>
     <default class="collision">
       <geom group="3" />
     </default>
     <default class="visual">
-      <geom material="black" contype="0" conaffinity="0" group="2" />
+      <geom material="black" contype="0" conaffinity="0" group="2" condim="1" />
     </default>
     <default class="mx106">
-      <joint damping="1.084" armature="0.045" frictionloss="2.55" />
-      <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
+      <joint damping="0.4" armature="0.045" frictionloss="0.1" />
+      <position kp="10.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
     </default>
     <default class="mx64">
-      <joint damping="1.084" armature="0.045" frictionloss="2.55" />
-      <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
+      <joint damping="0.4" armature="0.045" frictionloss="0.1" />
+      <position kp="10.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
     </default>
     <default class="xh-540">
-      <joint damping="1.084" armature="0.045" frictionloss="0.03" />
-      <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
+      <joint damping="0.4" armature="0.045" frictionloss="0.1" />
+      <position kp="10.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
     </default>
   </default>
   <compiler angle="radian" autolimits="true" />
@@ -324,6 +328,7 @@
     <gyro site="imu" name="gyro"/>
     <velocimeter site="imu" name="local_linvel"/>
     <accelerometer site="imu" name="accelerometer"/>
+
     <framezaxis objtype="site" objname="imu" name="upvector"/>
     <framexaxis objtype="site" objname="imu" name="forwardvector"/>
     <framelinvel objtype="site" objname="imu" name="global_linvel"/>
@@ -331,26 +336,14 @@
     <framepos objtype="site" objname="imu" name="position"/>
     <framequat objtype="site" objname="imu" name="orientation"/>
 
-    <framezaxis objtype="site" objname="l_foot_site" name="l_foot_site_upvector"/>
-    <framexaxis objtype="site" objname="l_foot_site" name="l_foot_site_forwardvector"/>
     <framelinvel objtype="site" objname="l_foot_site" name="l_foot_site_global_linvel"/>
-    <frameangvel objtype="site" objname="l_foot_site" name="l_foot_site_global_angvel"/>
-    <framepos objtype="site" objname="l_foot_site" name="l_foot_site_position"/>
-    <framequat objtype="site" objname="l_foot_site" name="l_foot_site_orientation"/>
+    <framexaxis objtype="site" objname="l_foot_site" name="l_foot_site_upvector"/>
+    <framepos objtype="site" objname="l_foot_site" name="l_foot_site_pos"/>
 
-    <framezaxis objtype="site" objname="r_foot_site" name="r_foot_site_upvector"/>
-    <framexaxis objtype="site" objname="r_foot_site" name="r_foot_site_forwardvector"/>
     <framelinvel objtype="site" objname="r_foot_site" name="r_foot_site_global_linvel"/>
-    <frameangvel objtype="site" objname="r_foot_site" name="r_foot_site_global_angvel"/>
-    <framepos objtype="site" objname="r_foot_site" name="r_foot_site_position"/>
-    <framequat objtype="site" objname="r_foot_site" name="r_foot_site_orientation"/>
+    <framexaxis objtype="site" objname="r_foot_site" name="r_foot_site_upvector"/>
+    <framepos objtype="site" objname="r_foot_site" name="r_foot_site_pos"/>
 
-    <framelinvel objtype="body" objname="l_foot" name="l_foot_global_linvel"/>
-    <framelinvel objtype="body" objname="r_foot" name="r_foot_global_linvel"/>
-    <framexaxis objtype="body" objname="l_foot" name="l_foot_upvector"/>
-    <framexaxis objtype="body" objname="r_foot" name="r_foot_upvector"/>
-    <framepos objtype="body" objname="l_foot" name="l_foot_pos"/>
-    <framepos objtype="body" objname="r_foot" name="r_foot_pos"/>
   </sensor>
 
     <keyframe>
