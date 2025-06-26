@@ -138,7 +138,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._hip_indices = jp.array(hip_indices)
 
     knee_indices = []
-    for side in ["L", "L"]:
+    for side in ["L", "R"]:
       knee_indices.append(self._mj_model.joint(f"{side}Knee").qposadr - 7) # Erste sieben Einträge gehören der Basisbewegung an, die Restlichen den Gelenkwinkel
     self._knee_indices = jp.array(knee_indices)
 
@@ -179,8 +179,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
     qpos_noise_scale = np.zeros(12)
     hip_ids = [0, 1, 2, 6, 7, 8]
     kfe_ids = [3, 9]
-    ffe_ids = [4, 10]
-    faa_ids = [5, 11]
+    ffe_ids = [4, 10] # joint type...
+    faa_ids = [5, 11] # faa is a type of actuator
     qpos_noise_scale[hip_ids] = self._config.noise_config.scales.hip_pos
     qpos_noise_scale[kfe_ids] = self._config.noise_config.scales.kfe_pos
     qpos_noise_scale[ffe_ids] = self._config.noise_config.scales.ffe_pos
