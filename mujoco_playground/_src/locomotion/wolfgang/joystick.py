@@ -36,7 +36,7 @@ def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02, # Übernehmbar
       sim_dt=0.002, # Übernehmbar
-      episode_length=1, # Übernehmbar
+      episode_length=1000, # Übernehmbar
       action_repeat=1, # Übernehmbar
       action_scale=0.5, # Übernehmbar
       history_len=1, # Übernehmbar
