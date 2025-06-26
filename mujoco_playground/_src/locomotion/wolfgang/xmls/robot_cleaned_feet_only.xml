@@ -11,18 +11,18 @@
     <default class="visual">
       <geom material="black" contype="0" conaffinity="0" group="2" condim="1" />
     </default>
-    <default class="mx106">
-      <joint damping="0.4" armature="0.045" frictionloss="0.1" />
-      <position kp="10.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
-    </default>
-    <default class="mx64">
-      <joint damping="0.4" armature="0.045" frictionloss="0.1" />
-      <position kp="10.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
-    </default>
-    <default class="xh-540">
-      <joint damping="0.4" armature="0.045" frictionloss="0.1" />
-      <position kp="10.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
-    </default>
+<default class="mx106">
+        <joint damping="1.7" armature="0.025" frictionloss="0.1" />
+        <position kp="21.0" ctrlrange="-3.141592 3.141592" forcerange="-8 8" />
+      </default>
+      <default class="mx64">
+        <joint damping="0.66" armature="0.012" frictionloss="0.09" />
+        <position kp="12.5" ctrlrange="-3.141592 3.141592" forcerange="-5 5" />
+      </default>
+      <default class="xh-540">
+        <joint damping="1.7" armature="0.025" frictionloss="0.1" />
+        <position kp="21.0" ctrlrange="-3.141592 3.141592" forcerange="-8 8" />
+      </default>
   </default>
   <compiler angle="radian" autolimits="true" />
   <asset>
@@ -31,6 +31,8 @@
   <worldbody>
     <body name="torso" pos="0.0 0.0 0.4274" quat="0.999 0.0 0.05 0.0">
     <site name="imu"/>
+    <camera name="front" pos="1.210 -0.435 0.32" xyaxes="0.342 0.940 0.000 -0.321 0.117 0.940" mode="trackcom"/>
+      <camera name="track" pos="0.805 -1.105 0.2" xyaxes="0.814 0.580 0.000 -0.140 0.196 0.971" mode="trackcom"/>
       <geom size="0.0201 0.0205 0.03055" pos="0.01605 0.053 0.2035" quat="9.38184e-07 -0.707105 9.38187e-07 0.707108" type="box" rgba="0.647059 0.647059 0.647059 1" class="visual" />
     <geom size="0.0201 0.0205 0.03055" pos="0.01605 -0.053 0.2035" quat="0.707105 0 -0.707108 0" type="box" rgba="0.647059 0.647059 0.647059 1" class="visual" />
     <geom size="0.0095 0.0365 0.0065" pos="-0.0635 0.0675 0.177415" quat="0.499998 -0.5 -0.500002 0.5" type="box" rgba="0.647059 0.647059 0.647059 1" class="visual" />
@@ -140,6 +142,7 @@
               <geom size="0.014 0.00175 0.00295" pos="-0.01745 -0.007 -0.00725" quat="0.499998 -0.5 0.500002 -0.5" type="box" rgba="0.647059 0.647059 0.647059 1" class="visual" />
               <geom size="0.0201 0.023 0.03255" pos="0 -0.01805 -0.026" quat="0.707105 -0.707108 0 0" type="box" rgba="0.647059 0.647059 0.647059 1" class="visual" />
               <body name="r_foot" pos="-0.0691 0 -0.026" quat="0.505584 0.494353 0.494351 -0.505586">
+              <geom name="r_foot1" size="0.077 0.053 0.00175" pos="0.015 0.092 -0.03775" quat="0.707105 0 0 -0.707108" type="box" rgba="0.717647 0.717647 0.717647 1" class="collision" />
               <site name="r_foot_site"/>
                 <inertial pos="0.0120466 0.0909614 -0.0301459" quat="0.51331 0.497032 -0.512829 0.475898" mass="0.274879" diaginertia="0.0012242 0.000943261 0.000330309" />
                 <joint name="RAnkleRoll" pos="0 0 0" axis="0 -1 0" range="-1.0472 1.0472" class="mx106" />
@@ -264,6 +267,7 @@
               <geom size="0.0201 0.023 0.03255" pos="0.0431 -0.01805 -0.026" quat="0.499998 -0.5 0.5 0.500002" type="box" rgba="0.262745 0.282353 0.301961 1" class="visual" />
               <body name="l_foot" pos="0.0691 0 -0.026" quat="0.499998 0.5 -0.5 0.500002">
                 <site name="l_foot_site"/>
+                <geom name="l_foot1" size="0.077 0.053 0.00175" pos="-0.015 0.092 -0.03775" quat="0.707105 0 0 -0.707108" type="box" rgba="0.717647 0.717647 0.717647 1" class="collision" />
                 <inertial pos="-0.0121076 0.0909614 -0.0301459" quat="0.476206 0.512458 -0.497419 0.51302" mass="0.274879" diaginertia="0.00122374 0.000943172 0.000329929" />
                 <joint name="LAnkleRoll" pos="0 0 0" axis="0 -1 0" range="-1.0472 1.0472" class="mx106" />
                 <geom size="0.004 0.02 0.002" pos="-0.06 0.1635 -0.032" quat="1 0 0 0" type="box" rgba="0.717647 0.717647 0.717647 1" class="visual" />
@@ -349,14 +353,13 @@
     <keyframe>
     <key name="home"
       qpos="
-    0 0 0.515 
+    0 0 0.56
     1 0 0 0
-    -0.071 0.103 -0.463 0.983 -0.350 0.126
-    0.071 -0.103 -0.463 0.983 -0.350 -0.126"
+    0.023628265148262724 -0.10401795710581162 -0.7352626990449959 -1.3228415184260092 0.5495038397740458 -0.12913515511895796 
+    -0.016441795868928723 0.07253788412595062 0.7420808433462046 1.334527650998329 -0.5537397918567754 0.07437380704149316"
       ctrl="
-    0.071 -0.103 -0.463 0.983
-    -0.071 0.103 -0.463 0.983 -0.350 0.126
-    0.0 0.0"/>
+        0 0 0 0 0 0
+    0 0 0 0 0 0"/>
   </keyframe>
   
 </mujoco>
