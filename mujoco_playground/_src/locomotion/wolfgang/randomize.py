@@ -35,14 +35,14 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
     frictionloss = model.dof_frictionloss[6:] * jax.random.uniform(
         key, shape=(12,), minval=0.9, maxval=1.1
     )
-    dof_frictionloss = model.dof_frictionloss.at[6:].set(frictionloss)
+    dof_frictionloss = model.dof_frictionloss.at[6:].set(frictionloss) # falscher Index? -> Erst ab Index 7?
 
     # Scale armature: *U(1.0, 1.05).
     rng, key = jax.random.split(rng)
     armature = model.dof_armature[6:] * jax.random.uniform(
         key, shape=(12,), minval=1.0, maxval=1.05
     )
-    dof_armature = model.dof_armature.at[6:].set(armature)
+    dof_armature = model.dof_armature.at[6:].set(armature) # falscher Index? -> Erst ab Index 7?
 
     # Scale all link masses: *U(0.9, 1.1).
     rng, key = jax.random.split(rng)
