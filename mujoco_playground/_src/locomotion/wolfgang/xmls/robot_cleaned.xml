@@ -13,16 +13,16 @@
       <geom material="black" contype="0" conaffinity="0" group="2" />
     </default>
     <default class="mx106">
-      <joint damping="1.084" armature="0.045" frictionloss="2.55" />
-      <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
+      <joint damping="1.7" armature="0.025" frictionloss="0.1" />
+      <position kp="21.0" ctrlrange="-3.141592 3.141592" forcerange="-8 8" />
     </default>
     <default class="mx64">
-      <joint damping="1.084" armature="0.045" frictionloss="2.55" />
-      <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
+      <joint damping="0.66" armature="0.012" frictionloss="0.09" />
+      <position kp="12.5" ctrlrange="-3.141592 3.141592" forcerange="-5 5" />
     </default>
     <default class="xh-540">
-      <joint damping="1.084" armature="0.045" frictionloss="0.03" />
-      <position kp="50.1" ctrlrange="-3.141592 3.141592" forcerange="-50 50" />
+      <joint damping="1.7" armature="0.025" frictionloss="0.1" />
+      <position kp="21.0" ctrlrange="-3.141592 3.141592" forcerange="-8 8" />
     </default>
   </default>
   <compiler angle="radian" autolimits="true" />
