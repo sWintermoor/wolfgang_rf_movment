@@ -142,14 +142,16 @@ class Joystick(wolfgang_base.WolfgangEnv):
       knee_indices.append(self._mj_model.joint(f"{side}Knee").qposadr - 7) # Erste sieben Einträge gehören der Basisbewegung an, die Restlichen den Gelenkwinkel
     self._knee_indices = jp.array(knee_indices)
 
-    # Gewichtsvektoren für die Gelenke, Übernehmbar?
+    # Gewichtsvektoren für die Gelenke -> Wie wichtig sind die einzelnen Elemente für die Belohnung?
     # fmt: off
     self._weights = jp.array([
-        1.0, 1.0, 0.01, 0.01, 1.0, 1.0,
-        1.0, 1.0,
+        0.001, 0.001, 0.001,  # right arm
+        0.001, 0.001, 0.001,  # left arm
       
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # left leg.
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # right leg.
+
+        0.001, 0.001 # head
     ])
     # fmt: on
 
