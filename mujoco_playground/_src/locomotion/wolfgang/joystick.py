@@ -118,7 +118,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
   def _post_init(self) -> None:
     # XML-Datei überprüfen, ob entsprechende Eigenschaften vorhanden sind, z.B. _mj_model.Eigenschaft
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos) # Keyframe ist ein gespeicherter Zustand des Modells -> Standardposition (Für Wolfgang?)
-    self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
+    self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[13:25])
 
     # Note: First joint is freejoint.
     self._lowers, self._uppers = self.mj_model.jnt_range[1:].T # Erhalten untere und obere Grenze 
@@ -133,25 +133,25 @@ class Joystick(wolfgang_base.WolfgangEnv):
     for side in ["L", "R"]: 
       for joint_name in hip_joint_names:
         hip_indices.append(
-            self._mj_model.joint(f"{side}{joint_name}").qposadr - 7
+            self._mj_model.joint(f"{side}{joint_name}").qposadr - (7 + 6) 
         ) 
     self._hip_indices = jp.array(hip_indices)
 
     knee_indices = []
     for side in ["L", "R"]:
-      knee_indices.append(self._mj_model.joint(f"{side}Knee").qposadr - 7) # Erste sieben Einträge gehören der Basisbewegung an, die Restlichen den Gelenkwinkel
+      knee_indices.append(self._mj_model.joint(f"{side}Knee").qposadr - (7 + 6)) # Erste sieben Einträge gehören der Basisbewegung an, die Restlichen den Gelenkwinkel
     self._knee_indices = jp.array(knee_indices)
 
     # Gewichtsvektoren für die Gelenke -> Wie wichtig sind die einzelnen Elemente für die Belohnung?
     # fmt: off
     self._weights = jp.array([
-        0.001, 0.001, 0.001,  # right arm
-        0.001, 0.001, 0.001,  # left arm
+        #0.001, 0.001, 0.001,  # right arm
+        #0.001, 0.001, 0.001,  # left arm
       
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # left leg.
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # right leg.
 
-        0.001, 0.001 # head
+        #0.001, 0.001 # head
     ])
     # fmt: on
 
@@ -180,7 +180,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._foot_linvel_sensor_adr = jp.array(foot_linvel_sensor_adr)
 
     # Hinzufügen von Rauschen in den Gelenkstellungen
-    qpos_noise_scale = np.zeros(20)
+    qpos_noise_scale = np.zeros(12)
+    #TODO
     hip_ids = [0, 1, 2, 6, 7, 8]
     kfe_ids = [3, 9]
     ffe_ids = [4, 10] # joint type...
@@ -210,8 +211,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # Zufällige Gelenkpositionen 
     # qpos[7:]=*U(0.5, 1.5)
     rng, key = jax.random.split(rng)
-    qpos = qpos.at[7:].set(
-        qpos[7:] * jax.random.uniform(key, (20,), minval=0.5, maxval=1.5)
+    qpos = qpos.at[13:25].set(
+        qpos[13:25] * jax.random.uniform(key, (12,), minval=0.5, maxval=1.5)
     )
 
     # Zufällige Gelenkgeschwindigkeiten
@@ -222,7 +223,9 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Erstellen MuJoCo-Datenobjekt mit den initialien Zuständen
-    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
+    ctrl = jp.zeros(self.mjx_model.nu)
+    ctrl = ctrl.at[6:18].set(qpos[13:25])
+    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=ctrl)
 
     # Zufällige Gangfrequenz (gait_freq) + Phaseninkrement (phase_dt)
     # Phase, freq=U(1.0, 1.5)
@@ -399,7 +402,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Übernehmbar
-    joint_angles = data.qpos[7:]
+    joint_angles = data.qpos[13:25]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_angles = (
         joint_angles
@@ -409,7 +412,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Übernehmbar
-    joint_vel = data.qvel[15:]
+    joint_vel = data.qvel[15:] # TODO
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_vel = (
         joint_vel
@@ -520,14 +523,14 @@ class Joystick(wolfgang_base.WolfgangEnv):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
+        "stand_still": self._cost_stand_still(info["command"], data.qpos[13:25]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
-            data.qpos[7:], info["command"]
+            data.qpos[13:25], info["command"]
         ),
-        "joint_deviation_knee": self._cost_joint_deviation_knee(data.qpos[7:]),
-        "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:]),
-        "pose": self._cost_pose(data.qpos[7:]),
+        "joint_deviation_knee": self._cost_joint_deviation_knee(data.qpos[13:25]),
+        "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[13:25]),
+        "pose": self._cost_pose(data.qpos[13:25]),
     }
 
   # Tracking rewards.
