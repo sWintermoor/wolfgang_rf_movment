@@ -91,10 +91,10 @@ def default_config() -> config_dict.ConfigDict:
       push_config=config_dict.create( # Konfiguration für zufällige Stöße
           enable=True, # Zufällige Stöße sind aktiviert
           interval_range=[5.0, 10.0], # Zeitbereich zwischen zwei aufeinanderfolgenden Stößen
-          magnitude_range=[0.1, 0.5], # Stärke der Stöße
+          magnitude_range=[0.1, 0.8], # Stärke der Stöße
       ),
-      lin_vel_x=[-1.0, 1.0], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
-      lin_vel_y=[-1.0, 1.0],
+      lin_vel_x=[-0.5, 0.5], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
+      lin_vel_y=[-0.5, 0.5],
       ang_vel_yaw=[-1.0, 1.0],
   )
 
