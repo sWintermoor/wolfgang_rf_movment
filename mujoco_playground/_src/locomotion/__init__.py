@@ -131,7 +131,7 @@ _randomizer = {
     "T1JoystickFlatTerrain": t1_randomize.domain_randomize,
     "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
     # Wolfgang
-    "Wolfgang": wolfgang_randomize.domain_randomize,
+    "WolfgangJoystick": wolfgang_randomize.domain_randomize,
 }
 
 

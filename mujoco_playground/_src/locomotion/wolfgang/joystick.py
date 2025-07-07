@@ -91,11 +91,11 @@ def default_config() -> config_dict.ConfigDict:
       push_config=config_dict.create( # Konfiguration für zufällige Stöße
           enable=True, # Zufällige Stöße sind aktiviert
           interval_range=[5.0, 10.0], # Zeitbereich zwischen zwei aufeinanderfolgenden Stößen
-          magnitude_range=[0.1, 0.5], # Stärke der Stöße
+          magnitude_range=[0.5, 1.1], # Stärke der Stöße
       ),
-      lin_vel_x=[-1.0, 1.0], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
-      lin_vel_y=[-1.0, 1.0],
-      ang_vel_yaw=[-1.0, 1.0],
+      lin_vel_x=[0.5, 0.5], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
+      lin_vel_y=[-0.5, 0.5],
+      ang_vel_yaw=[-0.5, 0.5],
   )
 
 
@@ -145,13 +145,13 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # Gewichtsvektoren für die Gelenke -> Wie wichtig sind die einzelnen Elemente für die Belohnung?
     # fmt: off
     self._weights = jp.array([
-        0.001, 0.001, 0.001,  # right arm
-        0.001, 0.001, 0.001,  # left arm
+        0, 0, 0,  # right arm
+        0, 0, 0,  # left arm
       
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # left leg.
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # right leg.
 
-        0.001, 0.001 # head
+        0, 0 # head
     ])
     # fmt: on
 
