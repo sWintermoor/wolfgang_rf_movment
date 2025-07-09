@@ -389,12 +389,12 @@
     </body>
     <body name="neck" pos="-0.0095 0 0.2345" quat="1.32679e-06 -1 0 0">
       <inertial pos="0.0186912 -7.75177e-05 -0.0220143" quat="-0.0168892 0.773726 -5.81151e-05 0.633295" mass="0.148233" diaginertia="6.35428e-05 5.76425e-05 3.79234e-05" />
-      <joint name="HeadPan" pos="0 0 0" axis="0 0 -1" range="-2.35619 2.35619" class="mx64" />
+      <!-- <joint name="HeadPan" pos="0 0 0" axis="0 0 -1" range="-2.35619 2.35619" class="mx64" /> -->
       <geom size="0.018 0.02 0.00465" pos="0.0035 0 -0.00465" type="box" rgba="0.247059 0.247059 0.247059 1" class="visual" />
       <geom size="0.0201 0.0205 0.03055" pos="0.01845 0 -0.024" quat="9.38184e-07 0.707105 -9.38187e-07 0.707108" type="box" rgba="0.247059 0.247059 0.247059 1" class="visual" />
       <body name="head" pos="0.036 0.0235 -0.024" quat="0.707105 -0.707108 0 0">
         <inertial pos="0.000411708 0.0674937 -0.0200647" quat="0.637844 0.233437 -0.515718 0.522204" mass="0.301358" diaginertia="0.000445949 0.000352444 0.000301483" />
-        <joint name="HeadTilt" pos="0 0 0" axis="0 0 1" range="-1.5708 1.0472" class="mx64" />
+        <!-- <joint name="HeadTilt" pos="0 0 0" axis="0 0 1" range="-1.5708 1.0472" class="mx64" /> -->
         <geom size="0.0215 0.0081" pos="0.0351 0.0795 -0.0235" quat="0.707105 0 -0.707108 0" type="cylinder" rgba="0.647059 0.647059 0.647059 1" class="visual" />
         <geom size="0.01675 0.006" pos="0.021 0.0795 -0.0235" quat="0.707105 0 -0.707108 0" type="cylinder" rgba="0.647059 0.647059 0.647059 1" class="visual" />
         <geom size="0.025 0.0045" pos="0 0 0.0045" type="cylinder" rgba="0.647059 0.647059 0.647059 1" class="visual" />
@@ -432,8 +432,8 @@
   <position joint="LKnee" name="LKnee" class="xh-540" />
   <position joint="LAnklePitch" name="LAnklePitch" class="mx106" />
   <position joint="LAnkleRoll" name="LAnkleRoll" class="mx106" />
-  <position joint="HeadPan" name="HeadPan" class="mx64" />
-  <position joint="HeadTilt" name="HeadTilt" class="mx64" />
+  <!-- <position joint="HeadPan" name="HeadPan" class="mx64" /> -->
+  <!-- <position joint="HeadTilt" name="HeadTilt" class="mx64" /> -->
 </actuator>
 
   <sensor>
@@ -478,12 +478,12 @@
     0 0 0 
     0.023628265148262724 -0.10401795710581162 -0.7352626990449959 -1.3228415184260092 0.5495038397740458 -0.12913515511895796 
     -0.016441795868928723 0.07253788412595062 0.7420808433462046 1.334527650998329 -0.5537397918567754 0.07437380704149316
-    0 0"
+    "
       ctrl="
     0 0 0 0 0 0
     0 0 0 0 0 0
     0 0 0 0 0 0
-    0 0"/>
+    "/>
   </keyframe>
   
 </mujoco>
