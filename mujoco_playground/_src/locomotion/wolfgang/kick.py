@@ -83,11 +83,11 @@ def default_config() -> config_dict.ConfigDict:
               joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
               dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
               pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
+              ball_acceleration=1,
           ),
           tracking_sigma=0.5, # Beeinflusst, wie empfindlich die Belohnung auf Abweichungen zwischen der gewünschten Geschwindigkeit (Befehl) und der tatsächlichen Geschwindigkeit des Roboters reagiert.
           max_foot_height=0.1,
           base_height_target=0.5,
-          ball_acc=1,
       ),
       push_config=config_dict.create( # Konfiguration für zufällige Stöße
           enable=True, # Zufällige Stöße sind aktiviert
@@ -124,7 +124,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._ball_body_id = self._mj_model.body("ball").id
 
     # Note: First joint is freejoint.
-    self._lowers, self._uppers = self.mj_model.jnt_range[1:].T # Erhalten untere und obere Grenze 
+    self._lowers, self._uppers = self.mj_model.jnt_range[1:-1].T # Erhalten untere und obere Grenze 
     # Berechnen wieche Grenzen -> Übernehmbar
     c = (self._lowers + self._uppers) / 2
     r = self._uppers - self._lowers
@@ -504,7 +504,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "action_rate": self._cost_action_rate(
             action, info["last_act"], info["last_last_act"]
         ),
-        "energy": self._cost_energy(data.qvel[6:], data.actuator_force),
+        "energy": self._cost_energy(data.qvel[6:24], data.actuator_force),
         # Feet related rewards.
         "feet_slip": self._cost_feet_slip(data, contact, info),
         "feet_clearance": self._cost_feet_clearance(data, info),
@@ -523,14 +523,14 @@ class Joystick(wolfgang_base.WolfgangEnv):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
+        "stand_still": self._cost_stand_still(info["command"], data.qpos[7:25]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
-            data.qpos[7:], info["command"]
+            data.qpos[7:25], info["command"]
         ),
-        "joint_deviation_knee": self._cost_joint_deviation_knee(data.qpos[7:]),
-        "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:]),
-        "pose": self._cost_pose(data.qpos[7:]),
+        "joint_deviation_knee": self._cost_joint_deviation_knee(data.qpos[7:25]),
+        "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:25]),
+        "pose": self._cost_pose(data.qpos[7:25]),
         # Ball related rewards
         "ball_acceleration": self._reward_ball_acceleration(data)
     }
@@ -702,14 +702,13 @@ class Joystick(wolfgang_base.WolfgangEnv):
       self,
       data: mjx.Data,
   ):
-    ball_xacc = data.xacc[self._ball_body_id, :3]
-    reward = ball_xacc - 0.001
+    ball_acc = data.cacc[self._ball_body_id, :3]
+    reward = sum(ball_acc) - 0.001
 
-    if(reward < 0):
-      return reward
-    else:
-      reward = jp.exp(reward)
-      return reward
+    return jp.where(reward < 0,
+             reward,
+             jp.exp(reward))
+  
     
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
