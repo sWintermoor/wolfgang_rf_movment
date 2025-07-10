@@ -44,6 +44,9 @@ from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 from mujoco_playground._src.locomotion.wolfgang import joystick as wolfgang_joystick
 from mujoco_playground._src.locomotion.wolfgang import randomize as wolfgang_randomize
 
+from mujoco_playground._src.locomotion.wolfgang import kick as wolfgang_kick
+from mujoco_playground._src.locomotion.wolfgang import randomize_kick as wolfgang_randomize_kick
+
 _envs = {
     "BarkourJoystick": barkour_joystick.Joystick,
     "BerkeleyHumanoidJoystickFlatTerrain": functools.partial(
@@ -85,6 +88,7 @@ _envs = {
     ),
     # Wolfgang
     "WolfgangJoystick": wolfgang_joystick.Joystick,
+    "WolfgangKick": wolfgang_kick.Joystick,
 }
 
 _cfgs = {
@@ -112,6 +116,7 @@ _cfgs = {
     "T1JoystickRoughTerrain": t1_joystick.default_config,
     # Wolfgang
     "WolfgangJoystick": wolfgang_joystick.default_config,
+    "WolfgangKick": wolfgang_kick.default_config
 }
 
 _randomizer = {
@@ -132,6 +137,7 @@ _randomizer = {
     "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
     # Wolfgang
     "WolfgangJoystick": wolfgang_randomize.domain_randomize,
+    "WolfgangKick": wolfgang_randomize_kick.domain_randomize,
 }
 
 
