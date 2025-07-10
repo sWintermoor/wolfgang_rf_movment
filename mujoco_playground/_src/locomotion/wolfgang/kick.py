@@ -84,6 +84,7 @@ def default_config() -> config_dict.ConfigDict:
               dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
               pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
               ball_acceleration=1,
+              ball_distance=1,
           ),
           tracking_sigma=0.5, # Beeinflusst, wie empfindlich die Belohnung auf Abweichungen zwischen der gewünschten Geschwindigkeit (Befehl) und der tatsächlichen Geschwindigkeit des Roboters reagiert.
           max_foot_height=0.1,
@@ -532,7 +533,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:25]),
         "pose": self._cost_pose(data.qpos[7:25]),
         # Ball related rewards
-        "ball_acceleration": self._reward_ball_acceleration(data)
+        "ball_acceleration": self._reward_ball_acceleration(data),
+        "ball_distance": self._cost_ball_distance(data)
     }
 
   # Tracking rewards.
@@ -707,7 +709,14 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     return jp.where(reward < 0,
              reward,
-             jp.exp(reward))
+             0.01 * jp.exp(reward))
+  
+  def _cost_ball_distance(
+      self,
+      data: mjx.Data
+  ):
+    cost = -0.01 * (abs(sum(data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id])))
+    return cost
   
     
 
