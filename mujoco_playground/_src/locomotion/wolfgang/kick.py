@@ -704,18 +704,18 @@ class Joystick(wolfgang_base.WolfgangEnv):
       self,
       data: mjx.Data,
   ):
-    ball_acc = data.cacc[self._ball_body_id, :3]
-    reward = sum(ball_acc) - 0.001
+    ball_vel = data.cvel[self._ball_body_id, :3]
+    reward = sum(ball_vel) - 0.001
 
     return jp.where(reward < 0,
              reward,
-             0.01 * jp.exp(reward))
+             jp.clip(reward**2, a_max = 2))
   
   def _cost_ball_distance(
       self,
       data: mjx.Data
   ):
-    cost = -0.01 * (abs(sum(data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id])))
+    cost = -0.1 * (abs(sum(data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id])))
     return cost
   
     
