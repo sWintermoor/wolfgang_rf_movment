@@ -57,34 +57,34 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create( # Sind die Parameter nutzbar?
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=0.0,
-              tracking_ang_vel=0.0,
+              tracking_lin_vel=1.0,
+              tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
-              ang_vel_xy=0.0,
-              orientation=0.0,
+              ang_vel_xy=-0.15,
+              orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
-              torques=0.0, # Hohe Drehmomente an den Gelenken werden bestraft.
-              action_rate=0.0, # Bestraft schnelle Änderungen in den Aktionen.
+              torques=-2.5e-5, # Hohe Drehmomente an den Gelenken werden bestraft.
+              action_rate=-0.01, # Bestraft schnelle Änderungen in den Aktionen.
               energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0, # Fußfreiheit -> z.B. zu niedrige Schritte
-              feet_air_time=0.0, # Belohnt die Zeit, in der die Füße in der Luft sind.
-              feet_slip=-0.0, # Bestraft das Rutschen der Füße auf dem Boden
+              feet_air_time=2.0, # Belohnt die Zeit, in der die Füße in der Luft sind.
+              feet_slip=-0.25, # Bestraft das Rutschen der Füße auf dem Boden
               feet_height=0.0, # Abweichung der Fußhöhe
-              feet_phase=0.0, # Belohnt das Einhalten eines gewünschten Gangzyklus.
+              feet_phase=1.0, # Belohnt das Einhalten eines gewünschten Gangzyklus.
               # Other rewards.
               stand_still=0.0, # Bewegung ohne Befehle
               alive=0.0, # Lebendig bleiben
-              termination=0.0, # Bestraft das vorzeitige Beenden der Episode
+              termination=-1.0, # Bestraft das vorzeitige Beenden der Episode
               # Pose related rewards.
-              joint_deviation_knee=0.0, # Bestraft Abweichungen der Kniegelenke von der gewünschten Position.
-              joint_deviation_hip=0.0, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
-              dof_pos_limits=0.0, # Bestrafung der Gelenkpositionsgrenzen
-              pose=0.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
-              ball_acceleration=1,
-              ball_distance=1,
+              joint_deviation_knee=-0.1, # Bestraft Abweichungen der Kniegelenke von der gewünschten Position.
+              joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
+              dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
+              pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
+              #ball_acceleration=1,
+              #ball_distance=1,
           ),
           tracking_sigma=0.5, # Beeinflusst, wie empfindlich die Belohnung auf Abweichungen zwischen der gewünschten Geschwindigkeit (Befehl) und der tatsächlichen Geschwindigkeit des Roboters reagiert.
           max_foot_height=0.1,
@@ -93,7 +93,7 @@ def default_config() -> config_dict.ConfigDict:
       push_config=config_dict.create( # Konfiguration für zufällige Stöße
           enable=True, # Zufällige Stöße sind aktiviert
           interval_range=[5.0, 10.0], # Zeitbereich zwischen zwei aufeinanderfolgenden Stößen
-          magnitude_range=[0.5, 0.8], # Stärke der Stöße
+          magnitude_range=[0.5, 1.1], # Stärke der Stöße
       ),
       lin_vel_x=[0.5, 0.5], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
       lin_vel_y=[-0.5, 0.5],
@@ -488,7 +488,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
   ) -> dict[str, jax.Array]:
     del metrics  # Unused.
     return {
-      """
+      
         # Tracking rewards.
         "tracking_lin_vel": self._reward_tracking_lin_vel(
             info["command"], self.get_local_linvel(data)
@@ -534,9 +534,9 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:25]),
         "pose": self._cost_pose(data.qpos[7:25]),
         # Ball related rewards
-        """
-        "ball_acceleration": self._reward_ball_acceleration(data),
-        "ball_distance": self._reward_ball_distance(data)
+        
+        #"ball_acceleration": self._reward_ball_acceleration(data),
+        #"ball_distance": self._reward_ball_distance(data)
     }
 
   # Tracking rewards.
