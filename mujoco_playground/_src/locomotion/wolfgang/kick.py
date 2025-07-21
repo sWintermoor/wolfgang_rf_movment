@@ -83,8 +83,8 @@ def default_config() -> config_dict.ConfigDict:
               joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
               dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
               pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
-              #ball_acceleration=1,
-              #ball_distance=1,
+              ball_acceleration=0,
+              ball_distance=0,
           ),
           tracking_sigma=0.5, # Beeinflusst, wie empfindlich die Belohnung auf Abweichungen zwischen der gewünschten Geschwindigkeit (Befehl) und der tatsächlichen Geschwindigkeit des Roboters reagiert.
           max_foot_height=0.1,
@@ -93,7 +93,7 @@ def default_config() -> config_dict.ConfigDict:
       push_config=config_dict.create( # Konfiguration für zufällige Stöße
           enable=True, # Zufällige Stöße sind aktiviert
           interval_range=[5.0, 10.0], # Zeitbereich zwischen zwei aufeinanderfolgenden Stößen
-          magnitude_range=[0.5, 1.1], # Stärke der Stöße
+          magnitude_range=[0.5, 0.8], # Stärke der Stöße
       ),
       lin_vel_x=[0.5, 0.5], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
       lin_vel_y=[-0.5, 0.5],
@@ -247,6 +247,10 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
     push_interval_steps = jp.round(push_interval / self.dt).astype(jp.int32)
 
+    init_dist = jp.linalg.norm(
+      data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id]
+    )
+
     # Sollte übernehmbar sein
     info = {
         "rng": rng,
@@ -265,6 +269,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "push": jp.array([0.0, 0.0]),
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
+        "previous_ball_distance": init_dist,
     }
 
     # Erstellen Belohnungskomponenten für einzelne Metriken
@@ -437,6 +442,11 @@ class Joystick(wolfgang_base.WolfgangEnv):
         * self._config.noise_config.scales.linvel
     )
 
+    # Ball-Statistiken
+    torso_pos = data.xpos[self._torso_body_id]
+    ball_pos = data.xpos[self._ball_body_id]
+    torso_ball_distance = torso_pos - ball_pos
+
     # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
         noisy_linvel,  # 3
@@ -447,6 +457,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         noisy_joint_vel,  # 12
         info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase,
+        torso_ball_distance, # 3
     ])
 
     accelerometer = self.get_accelerometer(data) # Übernehmbar  -> base.py anpassen
@@ -469,6 +480,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
         contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
+        torso_pos, # 3
+        ball_pos # 3
     ])
 
     return {
@@ -533,10 +546,9 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "joint_deviation_knee": self._cost_joint_deviation_knee(data.qpos[7:25]),
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:25]),
         "pose": self._cost_pose(data.qpos[7:25]),
-        # Ball related rewards
-        
-        #"ball_acceleration": self._reward_ball_acceleration(data),
-        #"ball_distance": self._reward_ball_distance(data)
+        # Ball related rewards      
+        "ball_acceleration": self._reward_ball_acceleration(data),
+        "ball_distance": self._reward_ball_distance(data, info)
     }
 
   # Tracking rewards.
@@ -717,9 +729,27 @@ class Joystick(wolfgang_base.WolfgangEnv):
   
   def _reward_ball_distance(
       self,
-      data: mjx.Data
+      data: mjx.Data,
+      info: dict[str, Any],
   ):
-    reward = jp.clip(3 - (abs(sum(data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id]))), a_min=0)
+    current_distance = jp.linalg.norm(
+      data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id]
+    )
+
+    absolute_previous_distance = abs(info['previous_ball_distance'])
+    absolute_current_distance = abs(current_distance)
+
+    brutto_reward = jp.where(absolute_previous_distance > absolute_current_distance,
+             absolute_previous_distance - absolute_current_distance,
+             0)
+    
+    brutto_reward = jp.exp(brutto_reward)
+    
+    reward = jp.clip(brutto_reward, a_max = 1)
+    #reward = jp.clip(3 - (abs(sum(data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id]))), a_min=0)
+
+    info['previous_ball_distance'] = current_distance
+
     return reward
   
     
