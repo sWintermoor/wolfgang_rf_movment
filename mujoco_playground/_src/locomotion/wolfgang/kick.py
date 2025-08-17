@@ -56,64 +56,36 @@ def default_config() -> config_dict.ConfigDict:
       ),
       reward_config=config_dict.create( # Sind die Parameter nutzbar?
           scales=config_dict.create(
-            # Tracking related rewards.
-              tracking_lin_vel=0.5,
-              tracking_ang_vel=0,
+              # Tracking related rewards.
+              tracking_lin_vel=1.0,
+              tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
-              ang_vel_xy=-0.015,
-              orientation=-0.5,
+              ang_vel_xy=-0.15,
+              orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
-              torques=-2.5e-6, # Hohe Drehmomente an den Gelenken werden bestraft.
-              action_rate=-0.001, # Bestraft schnelle Änderungen in den Aktionen.
+              torques=-2.5e-5, # Hohe Drehmomente an den Gelenken werden bestraft.
+              action_rate=-0.01, # Bestraft schnelle Änderungen in den Aktionen.
               energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0, # Fußfreiheit -> z.B. zu niedrige Schritte
-              feet_air_time=1.0, # Belohnt die Zeit, in der die Füße in der Luft sind.
-              feet_slip=-0.025, # Bestraft das Rutschen der Füße auf dem Boden
+              feet_air_time=2.0, # Belohnt die Zeit, in der die Füße in der Luft sind.
+              feet_slip=-0.25, # Bestraft das Rutschen der Füße auf dem Boden
               feet_height=0.0, # Abweichung der Fußhöhe
-              feet_phase=0.1, # Belohnt das Einhalten eines gewünschten Gangzyklus.
+              feet_phase=1.0, # Belohnt das Einhalten eines gewünschten Gangzyklus.
               # Other rewards.
               stand_still=0.0, # Bewegung ohne Befehle
               alive=0.0, # Lebendig bleiben
-              termination=-0.5, # Bestraft das vorzeitige Beenden der Episode
+              termination=-1.0, # Bestraft das vorzeitige Beenden der Episode
               # Pose related rewards.
-              joint_deviation_knee=-0.01, # Bestraft Abweichungen der Kniegelenke von der gewünschten Position.
-              joint_deviation_hip=-0.025, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
-              dof_pos_limits=-0.1, # Bestrafung der Gelenkpositionsgrenzen
-              pose=-0.1, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
-              ball_acceleration=1,
-              ball_distance=1,
-            
-              ## Tracking related rewards.
-              #tracking_lin_vel=1.0,
-              #tracking_ang_vel=0,
-              ## Base related rewards.
-              #lin_vel_z=0.0,
-              #ang_vel_xy=-0.15,
-              #orientation=-1.0,
-              #base_height=0.0,
-              ## Energy related rewards.
-              #torques=-2.5e-5, # Hohe Drehmomente an den Gelenken werden bestraft.
-              #action_rate=-0.01, # Bestraft schnelle Änderungen in den Aktionen.
-              #energy=0.0,
-              ## Feet related rewards.
-              #feet_clearance=0.0, # Fußfreiheit -> z.B. zu niedrige Schritte
-              #feet_air_time=2.0, # Belohnt die Zeit, in der die Füße in der Luft sind.
-              #feet_slip=-0.25, # Bestraft das Rutschen der Füße auf dem Boden
-              #feet_height=0.0, # Abweichung der Fußhöhe
-              #feet_phase=1.0, # Belohnt das Einhalten eines gewünschten Gangzyklus.
-              ## Other rewards.
-              #stand_still=0.0, # Bewegung ohne Befehle
-              #alive=0.0, # Lebendig bleiben
-              #termination=-1.0, # Bestraft das vorzeitige Beenden der Episode
-              ## Pose related rewards.
-              #joint_deviation_knee=-0.1, # Bestraft Abweichungen der Kniegelenke von der gewünschten Position.
-              #joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
-              #dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
-              #pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
-             
+              joint_deviation_knee=-0.1, # Bestraft Abweichungen der Kniegelenke von der gewünschten Position.
+              joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
+              dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
+              pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
+              ball_velocity=0,
+              ball_distance=0,
+              robot_ball_orientation = -0.2,           
           ),
           tracking_sigma=0.5, # Beeinflusst, wie empfindlich die Belohnung auf Abweichungen zwischen der gewünschten Geschwindigkeit (Befehl) und der tatsächlichen Geschwindigkeit des Roboters reagiert.
           max_foot_height=0.1,
@@ -122,7 +94,7 @@ def default_config() -> config_dict.ConfigDict:
       push_config=config_dict.create( # Konfiguration für zufällige Stöße
           enable=True, # Zufällige Stöße sind aktiviert
           interval_range=[5.0, 10.0], # Zeitbereich zwischen zwei aufeinanderfolgenden Stößen
-          magnitude_range=[0.1, 0.2], # Stärke der Stöße
+          magnitude_range=[0.2, 0.5], # Stärke der Stöße
       ),
       lin_vel_x=[0.5, 0.5], # Gewünschte Geschwindigkeiten(x, y, Dreh) 
       lin_vel_y=[-0.5, 0.5],
@@ -324,7 +296,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
         "previous_ball_distance": init_dist,
-        "time_till_ball_contact_termination": 30 * 1/self.dt, # 30 Sekunden bis zum Ende der Episode, wenn kein Ballkontakt besteht
+        "time_till_ball_contact_termination": 20 * 1/self.dt, # 30 Sekunden bis zum Ende der Episode, wenn kein Ballkontakt besteht
     }
 
     # Erstellen Belohnungskomponenten für einzelne Metriken
@@ -442,8 +414,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     state.info["time_till_ball_contact_termination"] = jp.where(
         first_ball_contact, 
-        30 * 1 / self.dt, # Reset auf 30 Sekunden, wenn der Ball berührt wurde
-        state.info["time_till_ball_contact_termination"] - 1, # Ansonsten wird der Wert um 1 verringert
+        100000 * 1/self.dt, # Reset Timer, wenn Ball berührt wurde
+        state.info["time_till_ball_contact_termination"] - 1
     )
 
     done = done.astype(reward.dtype)
@@ -457,7 +429,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     no_ball_contact_termination = (state.info["time_till_ball_contact_termination"] <= 0) # Überprüfen, ob der Ballkontakt zu lange her ist
 
     return (
-        fall_termination | jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any() | no_ball_contact_termination
+        fall_termination | jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any() # | no_ball_contact_termination
     )
 
   def _get_obs(
@@ -522,7 +494,14 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # Ball-Statistiken
     torso_pos = data.xpos[self._torso_body_id, :2]
     ball_pos = data.xpos[self._ball_body_id, :2]
-    torso_ball_distance = torso_pos - ball_pos
+    torso_ball_vec = ball_pos - torso_pos
+
+    quat = data.qpos[3:7]
+    yaw = self.quat_to_yaw(quat)
+
+    rel_x = torso_ball_vec[0]*jp.cos(yaw) + torso_ball_vec[1]*jp.sin(yaw)
+    rel_y = -torso_ball_vec[0]*jp.sin(yaw) + torso_ball_vec[1]*jp.cos(yaw)
+    rel_ball_pos_xy = jp.stack([rel_x, rel_y])
 
     # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
@@ -534,7 +513,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         noisy_joint_vel,  # 12
         info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase,
-        torso_ball_distance, # 3
+        rel_ball_pos_xy
     ])
 
     accelerometer = self.get_accelerometer(data) # Übernehmbar  -> base.py anpassen
@@ -624,8 +603,9 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:25]),
         "pose": self._cost_pose(data.qpos[7:25]),
         # Ball related rewards      
-        "ball_acceleration": self._reward_ball_acceleration(data),
-        "ball_distance": self._reward_ball_distance(data, info)
+        "ball_velocity": self._reward_ball_velocity(data),
+        "ball_distance": self._reward_ball_distance(data, info),
+        "robot_ball_orientation": self._cost_robot_ball_orientation(data),
     }
 
   # Tracking rewards.
@@ -791,12 +771,12 @@ class Joystick(wolfgang_base.WolfgangEnv):
   
   # Ball related rewards.
 
-  def _reward_ball_acceleration(
+  def _reward_ball_velocity(
       self,
       data: mjx.Data,
   ):
     ball_vel = data.cvel[self._ball_body_id, :3]
-    reward = jp.linalg.norm(ball_vel) ** 2
+    reward = jp.sum(jp.square(ball_vel))
 
     return reward
 
@@ -836,13 +816,37 @@ class Joystick(wolfgang_base.WolfgangEnv):
              (-1) * reward**2)
     """
 
-    #reward = jp.clip(3 - (abs(sum(data.xpos[self._torso_body_id] - data.xpos[self._ball_body_id]))), a_min=0)
-
-    info['previous_ball_distance'] = current_distance
-
     return reward
   
-    
+  def _cost_robot_ball_orientation(
+      self,
+      data: mjx.Data,
+  ):
+    base_quat = data.qpos[3:7]
+
+    yaw = self.quat_to_yaw(base_quat)
+
+    vec = data.xpos[self._ball_body_id, :2] - data.xpos[self._torso_body_id, :2]
+
+    ball_yaw = jp.arctan2(vec[1], vec[0])
+
+    angle_diff = (ball_yaw - yaw + jp.pi) % (2 * jp.pi) - jp.pi
+
+    cost = 1 - jp.cos(angle_diff)
+
+    return cost
+  
+  @staticmethod
+  def quat_to_yaw(base_quat):
+    w = base_quat[0]
+    x = base_quat[1]
+    y = base_quat[2]
+    z = base_quat[3]
+
+    yaw = jp.arctan2(2*(w*z + x*y), 1-2*(y**2 + z**2))
+
+    return yaw
+  
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)
