@@ -83,7 +83,7 @@ def default_config() -> config_dict.ConfigDict:
               joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
               dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
               pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
-              ball_velocity=0,
+              ball_velocity=1,
               ball_distance=0,
               robot_ball_orientation = -0.2,           
           ),
@@ -420,6 +420,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     done = done.astype(reward.dtype)
     state = state.replace(data=data, obs=obs, reward=reward, done=done)
+
     return state
 
   # Übernehmbar -> Überpüft, ob Simulation beendet werden soll
@@ -499,9 +500,23 @@ class Joystick(wolfgang_base.WolfgangEnv):
     quat = data.qpos[3:7]
     yaw = self.quat_to_yaw(quat)
 
+    # Relative Ball-Position
+
     rel_x = torso_ball_vec[0]*jp.cos(yaw) + torso_ball_vec[1]*jp.sin(yaw)
     rel_y = -torso_ball_vec[0]*jp.sin(yaw) + torso_ball_vec[1]*jp.cos(yaw)
     rel_ball_pos_xy = jp.stack([rel_x, rel_y])
+
+    rel_ball_pos_xy_normalized = rel_ball_pos_xy/(jp.linalg.norm(rel_ball_pos_xy) + 1e-6) # L2-Normalisierung
+
+    # Ballgeschwindigkeit
+
+    ball_vel = data.cvel[self._ball_body_id, :2]
+    ball_speed = jp.linalg.norm(ball_vel)
+    ball_speed = jp.clip(ball_speed, a_min=0.0, a_max = 12.0)
+
+    ball_speed_normalized = ball_speed/12 # 10 wegen max Geschwindigkeit
+
+    reward = jp.square(ball_speed_normalized)
 
     # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
@@ -513,7 +528,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
         noisy_joint_vel,  # 12
         info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase,
-        rel_ball_pos_xy
+        rel_ball_pos_xy_normalized,
+        ball_speed_normalized
     ])
 
     accelerometer = self.get_accelerometer(data) # Übernehmbar  -> base.py anpassen
@@ -537,7 +553,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
         torso_pos, # 3
-        ball_pos # 3
+        ball_pos, # 3
+        ball_speed
     ])
 
     return {
@@ -775,8 +792,13 @@ class Joystick(wolfgang_base.WolfgangEnv):
       self,
       data: mjx.Data,
   ):
-    ball_vel = data.cvel[self._ball_body_id, :3]
-    reward = jp.sum(jp.square(ball_vel))
+    ball_vel = data.cvel[self._ball_body_id, :2]
+    ball_speed = jp.linalg.norm(ball_vel)
+    ball_speed = jp.clip(ball_speed, a_min=0.0, a_max = 12.0)
+
+    ball_speed_normalized = ball_speed/12 # 10 wegen max Geschwindigkeit
+
+    reward = jp.square(ball_speed_normalized)
 
     return reward
 
