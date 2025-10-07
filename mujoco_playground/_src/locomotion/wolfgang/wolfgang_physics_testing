@@ -1,0 +1,50 @@
+import numpy as np
+import mujoco
+import mujoco.viewer
+import jax.numpy as jnp  # falls du jax benutzt
+from time import sleep
+
+model = mujoco.MjModel.from_xml_path("mujoco_playground/_src/locomotion/wolfgang/xmls/wolfgang_kicking/wolfgang_scene_kicking.xml")
+data = mujoco.MjData(model)
+
+# Hilfsfunktionen
+def print_geom_info(name_substr="ball"):
+    for i in range(model.ngeom):
+        name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, i) or f"geom{i}"
+        if name_substr in name:
+            body_id = model.geom_bodyid[i]
+            print("Geom:", name, "idx:", i, "body:", body_id)
+            print("  friction:", model.geom_friction[i])        # [slide, torsion, rolling]
+            print("  contype/conaffinity:", model.geom_contype[i], model.geom_conaffinity[i])
+            print("  body mass:", model.body_mass[body_id])
+            print()
+
+# Run kurz und prüfe Kontakte / Kräfte
+with mujoco.viewer.launch_passive(model, data) as viewer:
+    print_geom_info("ball")   # passe Name an
+    step = 0
+    while viewer.is_running():
+
+        if step % 100 == 0:
+            mujoco.mj_step(model, data)
+
+            # Anzahl Kontakte jetzt
+            if data.ncon > 0:
+                print("step", step, "ncon:", data.ncon)
+                # Kräfte auf Bodies (external spatial force per body, shape (nbody,6) meist)
+                # Zeige die resultierenden externen Kräfte auf Körper des Balls
+                for i in range(model.ngeom):
+                    name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, i) or f"geom{i}"
+                    if "ball" in name:
+                        bid = model.geom_bodyid[i]
+                        print("  body", bid, "qvel:", data.qvel[model.jnt_qposadr[ model.body_jntadr[bid] ] if model.body_jntadr[bid]>=0 else 0:]) 
+                        print("  cfrc_ext on body:", data.cfrc_ext[bid])  # äußere räumliche Kräfte (6)
+                        break
+
+            # Hörprobe: wird irgendwo qvel überschrieben?
+            # (Das ist eine einfache Heuristik; passe sie an dein Modell an.)
+            print("step", step, "ball qvel (linear):", data.qvel[:model.nq].tolist()[:6], "ball sum qvel:", jnp.linalg.norm(np.array(data.qvel[:model.nq].tolist()[:6])))
+
+        viewer.sync()
+        step += 1
+        #sleep(0.001)

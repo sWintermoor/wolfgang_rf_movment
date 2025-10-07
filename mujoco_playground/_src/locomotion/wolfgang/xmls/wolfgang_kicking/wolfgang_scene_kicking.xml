@@ -1,0 +1,61 @@
+<mujoco model="wolfgang scene">
+  <include file="robot_cleaned_kicking.xml"/>
+
+  <statistic center="0 0 0.2" extent="0.6"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="160" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+    <material name="ball" rgba="0.8 0.2 0.2 1"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" friction="0.5 0.01 0.001" condim="6"/>
+    <body name="ball" pos="0 0 0.07" euler="0 0 0">
+      <freejoint name="ball_freejoint"/>
+      <site name="ball"/>
+      <geom name="ball_geom" type="sphere" size="0.07" pos="0 0 0.07" mass="0.205" material="ball" contype="1" conaffinity="1" friction="0.6 0.1 0.1" condim="6"/>
+    </body>
+    <body name="target" pos="15 0 0.6">
+      <freejoint name="target_joint"/>
+      <geom name="target_geom" type="box" size="0.3 0.3 0.6" mass="0" class="collision"/>
+      <geom name="target_visual" type="box" size="0.3 0.3 0.6" rgba="0 1 0 1" class="visual"/>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <framelinvel objtype="site" objname="ball" name="ball_global_linvel"/>
+  </sensor>
+
+  <keyframe>
+    <key name="home"
+      qpos="
+    0 0 0.56
+    1 0 0 0
+    0 0 0 
+    0 0 0 
+    0.023628265148262724 -0.10401795710581162 -0.7352626990449959 -1.3228415184260092 0.5495038397740458 -0.12913515511895796 
+    -0.016441795868928723 0.07253788412595062 0.7420808433462046 1.334527650998329 -0.5537397918567754 0.07437380704149316
+
+    1 0 0.07
+    1 0 0 0
+
+    14 0 0.5
+    1 0 0 0 
+    "
+      ctrl="
+    0 0 0 0 0 0
+    0 0 0 0 0 0
+    0 0 0 0 0 0
+    "/>
+  </keyframe>
+</mujoco>
