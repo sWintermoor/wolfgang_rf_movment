@@ -41,6 +41,7 @@ def default_config() -> config_dict.ConfigDict:
       action_scale=0.5, # Übernehmbar
       history_len=1, # Übernehmbar
       soft_joint_pos_limit_factor=0.95, # weiche Gelenkpositionsgrenze (95% der Harten) -> sollte übernehmbar sein
+      fixed_ball_friction=None, 
       noise_config=config_dict.create(
           level=1.0,  # Set to 0.0 to disable noise. -> Übernehmbar (stabilisert das Modell)
           scales=config_dict.create( # Überprüfen, ob die einzelnen Parameter auch auf Wolfgang treffen; Werte erstmal lassen
@@ -280,6 +281,18 @@ class Joystick(wolfgang_base.WolfgangEnv):
       jp.concatenate([target_xy, jp.array([target_z])])
     )
     qpos = qpos.at[target_qposadr+3 : target_qposadr+7].set(jp.array([1.0, 0.0, 0.0, 0.0]))
+
+    # Zufällige Ball-Boden-Reibung-Berechnung
+
+    if self._config.fixed_ball_friction is not None:
+      new_ball_friction = np.array(self._config.fixed_ball_friction)
+    else:
+      new_ball_friction_slide = np.random.uniform(low=0.00001, high=1.0)
+      new_ball_friction_spin = np.random.uniform(low=0.00001, high=0.03)
+      new_ball_friction_roll = np.random.uniform(low=0.00001, high=0.01)
+      new_ball_friction = np.array([new_ball_friction_slide, new_ball_friction_spin, new_ball_friction_roll])
+
+    self._mj_model.geom("ball_geom").friction = new_ball_friction
 
     # Erstellen MuJoCo-Datenobjekt mit den initialien Zuständen
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:25])
@@ -537,6 +550,16 @@ class Joystick(wolfgang_base.WolfgangEnv):
     rel_ball_pos_xy = jp.stack([rel_x, rel_y])
 
     rel_ball_pos_xy_normalized = rel_ball_pos_xy/(jp.linalg.norm(rel_ball_pos_xy) + 1e-6) # L2-Normalisierung
+    
+    #Überprüfen, ob der Ball im Sehwinkel von 180 Grad liegt
+
+    vec_robot_ball = data.xpos[self._ball_body_id, :2] - data.xpos[self._torso_body_id, :2]
+
+    robot_ball_yaw = jp.arctan2(vec_robot_ball[1], vec_robot_ball[0])
+
+    angle_diff_robot_ball = (robot_ball_yaw - yaw + jp.pi) % (2 * jp.pi) - jp.pi 
+
+    rel_ball_pos_xy_normalized = jp.where(jp.abs(angle_diff_robot_ball) <= jp.pi/2, rel_ball_pos_xy_normalized, jp.zeros(2))
 
     # Ballgeschwindigkeit
 
@@ -557,6 +580,29 @@ class Joystick(wolfgang_base.WolfgangEnv):
     rel_target_pos_xy = jp.stack([rel_target_x, rel_target_y])
 
     rel_target_pos_xy_normalized = rel_target_pos_xy/(jp.linalg.norm(rel_target_pos_xy) + 1e-6) # L2-Normalisierung
+
+    # Noise für die (relative) Ball- und Zielposition
+
+    torso_ball_distance = jp.linalg.norm(torso_ball_vec)
+    torso_target_distance = jp.linalg.norm(torso_target_vec)
+
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    rel_ball_pos_xy_normalized = (
+        rel_ball_pos_xy_normalized
+        + (2 * jax.random.uniform(noise_rng, shape=rel_ball_pos_xy_normalized.shape) - 1)
+        * self._config.noise_config.level
+        * 0.01
+        * (torso_ball_distance / 10.0) # Je weiter der Ball entfernt ist, desto mehr Rauschen wird hinzugefügt
+    )
+
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    rel_target_pos_xy_normalized = (
+        rel_target_pos_xy_normalized
+        + (2 * jax.random.uniform(noise_rng, shape=rel_ball_pos_xy_normalized.shape) - 1)
+        * self._config.noise_config.level
+        * 0.01
+        * (torso_target_distance / 20.0) # Je weiter das Ziel entfernt ist, desto mehr Rauschen wird hinzugefügt
+    )
 
     # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
@@ -920,7 +966,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
       data.xpos[self._torso_body_id, :2] - data.xpos[self._ball_body_id, :2]
     )
 
-    weight = jp.where(robot_ball_distance > 0.3, 1.0, 0.05)
+    weight = jp.where(robot_ball_distance > 0.25, 1.0, 0.05)
 
     return cost * weight
   
@@ -987,7 +1033,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
       data.xpos[self._torso_body_id, :2] - data.xpos[self._ball_body_id, :2]
     )
 
-    weight = jp.where(robot_ball_distance > 0.3, 0.05, 5.0)
+    weight = jp.where(robot_ball_distance > 0.25, 0.05, 5.0)
 
     return cost * weight
 

@@ -66,6 +66,12 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
         + jax.random.uniform(key, shape=(18,), minval=-0.05, maxval=0.05)
     )
 
+    """
+    # Randomize ball_friction
+    rng, key = jax.random.split(rng)
+    ball_friction = model.
+    """
+
     return (
         geom_friction,
         dof_frictionloss,

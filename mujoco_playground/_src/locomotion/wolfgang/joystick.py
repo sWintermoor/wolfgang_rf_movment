@@ -41,6 +41,8 @@ def default_config() -> config_dict.ConfigDict:
       action_scale=0.5, # Übernehmbar
       history_len=1, # Übernehmbar
       soft_joint_pos_limit_factor=0.95, # weiche Gelenkpositionsgrenze (95% der Harten) -> sollte übernehmbar sein
+      backlash_scale=0.01,
+      action_delay=3, # Anzahl der Zeitschritte, um die Aktionen verzögert werden 
       noise_config=config_dict.create(
           level=1.0,  # Set to 0.0 to disable noise. -> Übernehmbar (stabilisert das Modell)
           scales=config_dict.create( # Überprüfen, ob die einzelnen Parameter auch auf Wolfgang treffen; Werte erstmal lassen
@@ -261,6 +263,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "push": jp.array([0.0, 0.0]),
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
+        "action_delay": jp.zeros((self._config.action_delay, self.mjx_model.nu)), # Verzögerung der Aktionen
     }
 
     # Erstellen Belohnungskomponenten für einzelne Metriken
@@ -305,9 +308,20 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     # Sollte übernehmbar sein
     motor_targets = self._default_pose + action * self._config.action_scale # Berechnen Zielposition der Gelenke
+
+    motor_targets = jp.where( # Backlash-Effekt
+      jp.abs(motor_targets - state.info["last_act"]) > self._config.backlash_scale,
+      motor_targets,
+      state.info["last_act"],
+    )
+
+    delayed_motor_targets = state.info["action_delay"][0] # Action delay
+
+    state.info["action_delay"] = jp.concatenate(state.info["action_delay"][1:], motor_targets[None, :], axis=0)
+
     # Simulationsschritt ausführen
     data = mjx_env.step(
-        self.mjx_model, state.data, motor_targets, self.n_substeps
+        self.mjx_model, state.data, delayed_motor_targets, self.n_substeps
     )
     state.info["motor_targets"] = motor_targets
 
