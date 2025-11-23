@@ -20,7 +20,7 @@ from mujoco_playground._src import mjx_env
 
 ROOT_PATH = mjx_env.ROOT_PATH / "locomotion" / "wolfgang"
 FEET_ONLY_FLAT_TERRAIN_XML = (
-    ROOT_PATH / "xmls" / "wolfgang_walking" / "wolfgang_scene.xml"
+    ROOT_PATH / "xmls" / "wolfgang_kicking" / "wolfgang_scene_kicking.xml"
 )
 
 # Currently only body elements for l_foot/r_foot Wolfgang -> Reasonable to create site and geoms for

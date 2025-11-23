@@ -121,7 +121,7 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
   elif env_name in (
       "WolfgangKick"
   ):
-    rl_config.num_timesteps = 150_000_000
+    rl_config.num_timesteps = 200_000_000
     rl_config.num_evals = 15
     rl_config.clipping_epsilon = 0.2
     rl_config.num_resets_per_eval = 1

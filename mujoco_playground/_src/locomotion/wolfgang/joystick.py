@@ -263,7 +263,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "push": jp.array([0.0, 0.0]),
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
-        "action_delay": jp.zeros((self._config.action_delay, self.mjx_model.nu)), # Verzögerung der Aktionen
+        #"action_delay": jp.zeros((self._config.action_delay, self.mjx_model.nu)), # Verzögerung der Aktionen
     }
 
     # Erstellen Belohnungskomponenten für einzelne Metriken
@@ -309,6 +309,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # Sollte übernehmbar sein
     motor_targets = self._default_pose + action * self._config.action_scale # Berechnen Zielposition der Gelenke
 
+    """
     motor_targets = jp.where( # Backlash-Effekt
       jp.abs(motor_targets - state.info["last_act"]) > self._config.backlash_scale,
       motor_targets,
@@ -319,9 +320,11 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     state.info["action_delay"] = jp.concatenate(state.info["action_delay"][1:], motor_targets[None, :], axis=0)
 
+    """
+
     # Simulationsschritt ausführen
     data = mjx_env.step(
-        self.mjx_model, state.data, delayed_motor_targets, self.n_substeps
+        self.mjx_model, state.data, motor_targets, self.n_substeps # delayed_motor_targets -> motor_targets
     )
     state.info["motor_targets"] = motor_targets
 
