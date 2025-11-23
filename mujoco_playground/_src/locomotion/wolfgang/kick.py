@@ -684,26 +684,26 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "tracking_lin_vel": self._reward_tracking_lin_vel(
             info["command"], self.get_local_linvel(data) , data
         ),
-        "tracking_ang_vel": self._reward_tracking_ang_vel(
-            info["command"], self.get_gyro(data)
-        ),
+        #"tracking_ang_vel": self._reward_tracking_ang_vel(
+        #    info["command"], self.get_gyro(data)
+        #),
         # Base-related rewards.
-        "lin_vel_z": self._cost_lin_vel_z(self.get_global_linvel(data)),
+        #"lin_vel_z": self._cost_lin_vel_z(self.get_global_linvel(data)),
         "ang_vel_xy": self._cost_ang_vel_xy(self.get_global_angvel(data)),
         "orientation": self._cost_orientation(self.get_gravity(data)),
-        "base_height": self._cost_base_height(data.qpos[2]),
+        #"base_height": self._cost_base_height(data.qpos[2]),
         # Energy related rewards.
         "torques": self._cost_torques(data.actuator_force),
         "action_rate": self._cost_action_rate(
             action, info["last_act"], info["last_last_act"]
         ),
-        "energy": self._cost_energy(data.qvel[6:24], data.actuator_force),
+        #"energy": self._cost_energy(data.qvel[6:24], data.actuator_force),
         # Feet related rewards.
         "feet_slip": self._cost_feet_slip(data, contact, info),
-        "feet_clearance": self._cost_feet_clearance(data, info),
-        "feet_height": self._cost_feet_height(
-            info["swing_peak"], first_contact, info
-        ),
+        #"feet_clearance": self._cost_feet_clearance(data, info),
+        #"feet_height": self._cost_feet_height(
+        #    info["swing_peak"], first_contact, info
+        #),
         "feet_air_time": self._reward_feet_air_time(
             air_time=info["feet_air_time"], first_contact=first_contact, commands=info["command"], data=data,
         ),
@@ -726,8 +726,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "pose": self._cost_pose(data.qpos[7:25]),
         # Ball related rewards      
         "ball_velocity": self._reward_ball_velocity(data),
-        "ball_distance": self._reward_ball_distance(data, info),
-        "robot_ball_orientation": self._cost_robot_ball_orientation(data),
+        #"ball_distance": self._reward_ball_distance(data, info),
+        #"robot_ball_orientation": self._cost_robot_ball_orientation(data),
         "ball_target_deviation": self._cost_ball_target_deviation(data),
         "target_position_deviation": self._target_position_deviation(data),
     }
@@ -744,7 +744,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     robot_ball_distance = jp.linalg.norm(
       data.xpos[self._torso_body_id, :2] - data.xpos[self._ball_body_id, :2]
     )
-    commands_adjusted =jp.where(robot_ball_distance <= 0.25, jp.array([0, 0]), commands[:2])
+    commands_adjusted =jp.where(robot_ball_distance <= 0.4, jp.array([0, 0]), commands[:2])
     lin_vel_error = jp.sum(jp.square(commands_adjusted - local_vel[:2]))
     
     reward = jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
@@ -810,7 +810,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     robot_ball_distance = jp.linalg.norm(
       data.xpos[self._torso_body_id, :2] - data.xpos[self._ball_body_id, :2]
     )
-    commands_adjusted =jp.where(robot_ball_distance <= 0.25, jp.array([0, 0, 0]), commands)
+    commands_adjusted =jp.where(robot_ball_distance <= 0.4, jp.array([0, 0, 0]), commands)
     cmd_norm = jp.linalg.norm(commands_adjusted)
     reward = jp.sum(jp.abs(qpos - self._default_pose)) * (cmd_norm < 0.1)
     return reward
@@ -891,7 +891,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     air_time = (air_time - threshold_min) * first_contact
     air_time = jp.clip(air_time, max=threshold_max - threshold_min)
     reward = jp.sum(air_time)
-    reward = jp.where(robot_ball_distance <= 0.25, 0.0, reward) 
+    reward = jp.where(robot_ball_distance <= 0.4, 0.0, reward) 
     #reward *= cmd_norm > 0.1  # No reward for zero commands.
     return reward
 
@@ -915,7 +915,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     robot_ball_distance = jp.linalg.norm(
       data.xpos[self._torso_body_id, :2] - data.xpos[self._ball_body_id, :2]
     )
-    reward = jp.where(robot_ball_distance <= 0.25, 0.0, reward) 
+    reward = jp.where(robot_ball_distance <= 0.4, 0.0, reward) 
     return reward
   
   # Ball related rewards.
@@ -1173,4 +1173,4 @@ def _target_position_stand(self, data: mjx.Data) -> jax.Array:
     vec_ball_target = data.xpos[self._target_body_id, :2] - data.xpos[self._ball_body_id, :2]
     norm = jp.linalg.norm(vec_ball_target)
     direction = vec_ball_target / (norm + 1e-6)
-    return data.xpos[self._ball_body_id, :2] + direction * -0.25
+    return data.xpos[self._ball_body_id, :2] + direction * -0.4
