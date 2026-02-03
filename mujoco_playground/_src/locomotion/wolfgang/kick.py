@@ -630,10 +630,10 @@ class Joystick(wolfgang_base.WolfgangEnv):
         noisy_joint_angles - self._default_pose,  # 12 Gelenkwindel relativ zur Standardposition
         noisy_joint_vel,  # 12
         info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
-        phase,
-        rel_ball_pos_xy_normalized,
-        ball_speed_normalized,
-        rel_target_pos_xy_normalized
+        phase, #1
+        rel_ball_pos_xy_normalized, #2
+        ball_speed_normalized, #1
+        rel_target_pos_xy_normalized #2
     ])
 
     accelerometer = self.get_accelerometer(data) # Übernehmbar  -> base.py anpassen
@@ -643,7 +643,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     # Übernehmbar -> state + glatte Werte + weitere Werte
     privileged_state = jp.hstack([
-        state,
+        state, #54
         gyro,  # 3
         accelerometer,  # 3
         gravity,  # 3
@@ -658,8 +658,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
         info["feet_air_time"],  # 2
         torso_pos, # 3
         ball_pos, # 3
-        ball_speed,
-        target_pos
+        ball_speed, #1
+        target_pos #2
     ])
 
     return {
