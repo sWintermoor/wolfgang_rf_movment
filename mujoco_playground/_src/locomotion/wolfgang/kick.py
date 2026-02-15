@@ -615,7 +615,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase,
         rel_ball_pos_xy_normalized,
-        ball_speed_normalized,
+        #ball_speed_normalized,
         rel_target_pos_xy_normalized
     ])
 
