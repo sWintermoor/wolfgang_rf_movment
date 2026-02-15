@@ -426,7 +426,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Übernehmbar
-    joint_vel = data.qvel[15:]
+    joint_vel = data.qvel[6:]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_vel = (
         joint_vel
@@ -452,14 +452,14 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
-        noisy_linvel,  # 3
+        #noisy_linvel,  # 3
         noisy_gyro,  # 3
         noisy_gravity,  # 3
         info["command"],  # 3
-        noisy_joint_angles - self._default_pose,  # 12 Gelenkwindel relativ zur Standardposition
-        noisy_joint_vel,  # 12
-        info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
-        phase,
+        noisy_joint_angles - self._default_pose,  # 18 Gelenkwindel relativ zur Standardposition
+        noisy_joint_vel,  # 18
+        info["last_act"],  # 18 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
+        phase, #4
     ])
 
     accelerometer = self.get_accelerometer(data) # Übernehmbar  -> base.py anpassen
@@ -468,6 +468,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     root_height = data.qpos[2] # Höhe des Roboters über dem Boden (z-Koordinate) -> Übernehmbar
 
     # Übernehmbar -> state + glatte Werte + weitere Werte
+    # Falsche Werte angegeben
     privileged_state = jp.hstack([
         state,
         gyro,  # 3

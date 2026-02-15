@@ -32,6 +32,8 @@ from mujoco_playground._src.locomotion.wolfgang import wolfgang_constants as con
 #TODO: self._init_q = jp.array(self._mj_model.keyframe("home").qpos) -> We have to add a keyframe called home 
 # under wolfgang_scene
 
+#TODO: Überprüfen, ob qpos und qvel richtig gesliced wurden.
+
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02, # Übernehmbar
@@ -512,7 +514,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Übernehmbar
-    joint_vel = data.qvel[15:]
+    joint_vel = data.qvel[6:]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_vel = (
         joint_vel
@@ -642,6 +644,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     root_height = data.qpos[2] # Höhe des Roboters über dem Boden (z-Koordinate) -> Übernehmbar
 
     # Übernehmbar -> state + glatte Werte + weitere Werte
+    # Falsche Anzahl angegeben
     privileged_state = jp.hstack([
         state, #54
         gyro,  # 3
