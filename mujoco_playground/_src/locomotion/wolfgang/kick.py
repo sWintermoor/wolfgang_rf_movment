@@ -84,14 +84,13 @@ def default_config() -> config_dict.ConfigDict:
               joint_deviation_hip=-0.25, # Bestraft Abweichungen der Hüftgelenke von der gewünschten Position.
               dof_pos_limits=-1.0, # Bestrafung der Gelenkpositionsgrenzen
               pose=-1.0, # Bestrafen Abweichungen der gesamten Haltung von einer Zielpose
-              ball_velocity=0.3, # 1.0 -> Muss x100 genommen werden
+              ball_velocity=3, #war vorher 0.3; 1.0 -> Muss x100 genommen werden
               ball_distance=0,
-              robot_ball_orientation = -0.5, # bestes Ergebnis bei 0.085 
-              ball_target_deviation = -0.5, #1.0         
+              robot_ball_orientation = -0.5, # bestes Ergebnis bei 0.085    
           ),
+          base_height_target=0.5,
           tracking_sigma=0.5, # Beeinflusst, wie empfindlich die Belohnung auf Abweichungen zwischen der gewünschten Geschwindigkeit (Befehl) und der tatsächlichen Geschwindigkeit des Roboters reagiert.
           max_foot_height=0.1,
-          base_height_target=0.5,
       ),
       push_config=config_dict.create( # Konfiguration für zufällige Stöße
           enable=True, # Zufällige Stöße sind aktiviert
@@ -127,8 +126,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:25])
 
     self._ball_body_id = self._mj_model.body("ball").id
-
-    self._target_body_id = self._mj_model.body("target").id
 
     # Note: First joint is freejoint.
     self._lowers, self._uppers = self.mj_model.jnt_range[1:-2].T # Erhalten untere und obere Grenze 
@@ -231,22 +228,17 @@ class Joystick(wolfgang_base.WolfgangEnv):
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-    # Zufällige Ballposition
+    # Ball vor Roboter platzieren
     rng, ball_rng = jax.random.split(rng)
 
-    ball_xy = jax.random.uniform(
-      ball_rng, (2,), minval = jp.array([-0.5, -0.5]), maxval = jp.array([+0.5, +0.5])
+    offset = jax.random.randint(
+      ball_rng,
+      minval= 0.3,
+      maxval=1,
+      shape=()
     )
 
-    offset = 1
-
-    ball_xy = jp.where(ball_xy[0] > 0,
-                       ball_xy + jp.array([offset, 0]),
-                       ball_xy - jp.array([offset, 0]))
-    
-    ball_xy = jp.where(ball_xy[1] > 0,
-                       ball_xy + jp.array([0, offset]),
-                       ball_xy - jp.array([0, offset]))
+    ball_xy = jp.array([offset, 0])
 
     ball_z = self._mj_model.geom("ball_geom").size[0]
     ball_jid = self._mj_model.joint("ball_freejoint").id
@@ -255,32 +247,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
         jp.concatenate([ball_xy, jp.array([ball_z])])
     )
     qpos = qpos.at[ball_qposadr+3:ball_qposadr+7].set(jp.array([1.0, 0.0, 0.0, 0.0]))
-
-    # Zufällige Targetposition
-    # TODO: Restliche qpos-Werte anpassen
-    rng, target_rng = jax.random.split(rng)
-
-    target_xy = jax.random.uniform(
-      target_rng, (2,), minval = jp.array([-14.0, -14.0]), maxval = jp.array([14.0, 14.0])
-    )
-
-    offset = 10.0
-
-    target_xy = jp.where(target_xy[0] > 0,
-                         target_xy + jp.array([offset, 0.0]),
-                         target_xy - jp.array([offset, 0.0]))
-
-    target_xy = jp.where(target_xy[1] > 0,
-                      target_xy + jp.array([0.0, offset]),
-                      target_xy - jp.array([0.0, offset]))
-    
-    target_z = self._mj_model.geom("target_geom").size[1] / 2
-    target_jid = self._mj_model.joint("target_joint").id
-    target_qposadr = self._mj_model.jnt_qposadr[target_jid]
-    qpos = qpos.at[target_qposadr: target_qposadr+3].set(
-      jp.concatenate([target_xy, jp.array([target_z])])
-    )
-    qpos = qpos.at[target_qposadr+3 : target_qposadr+7].set(jp.array([1.0, 0.0, 0.0, 0.0]))
 
     # Zufällige Ball-Boden-Reibung-Berechnung
 
@@ -357,7 +323,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     ball_position_buffer = jp.zeros((max_delay, 2))
     ball_velocity_buffer = jp.zeros((max_delay, 2))
-    target_position_buffer = jp.zeros((max_delay, 2))
 
     torso_position_buffer = jp.zeros((max_delay, 2))
 
@@ -390,7 +355,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "detection_delay": detection_delay,
         "ball_position_buffer": ball_position_buffer,
         "ball_velocity_buffer": ball_velocity_buffer,
-        "target_position_buffer": target_position_buffer,
         "torso_position_buffer": torso_position_buffer,
     }
 
@@ -614,9 +578,14 @@ class Joystick(wolfgang_base.WolfgangEnv):
     torso_ball_vec = ball_pos - torso_pos
 
     quat = data.qpos[3:7]
-    yaw = self.quat_to_yaw(quat)
+    #yaw = self.quat_to_yaw(quat)
 
     # Relative Ball-Position
+    rotation_mat_torso = data.xmat[self._torso_body_id]
+    rel_ball_pos = rotation_mat_torso.T @ (data.xpos[self._ball_body_id] - data.xpos[self._torso_body_id])
+    rel_ball_pos_xy = jp.stack(rel_ball_pos[:2])
+
+    """
 
     rel_x = torso_ball_vec[0]*jp.cos(yaw) + torso_ball_vec[1]*jp.sin(yaw)
     rel_y = -torso_ball_vec[0]*jp.sin(yaw) + torso_ball_vec[1]*jp.cos(yaw)
@@ -634,6 +603,10 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     rel_ball_pos_xy_normalized = jp.where(jp.abs(angle_diff_robot_ball) <= jp.pi/2, rel_ball_pos_xy_normalized, jp.zeros(2))
 
+    """
+
+
+   
     # Ballgeschwindigkeit
 
     info["ball_velocity_buffer"] = jp.concat([info["ball_velocity_buffer"][1:], 
@@ -647,55 +620,33 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     reward = jp.square(ball_speed_normalized)
 
-    # Relative Target-Position
-    info["target_position_buffer"] = jp.concat([info["target_position_buffer"][1:],
-                                               data.xpos[self._target_body_id, :2][None]], axis=0)
-
-    target_pos = info["target_position_buffer"][info["detection_delay"]]
-    torso_target_vec = target_pos - torso_pos
-
-    rel_target_x = torso_target_vec[0]*jp.cos(yaw) + torso_target_vec[1]*jp.sin(yaw)
-    rel_target_y = -torso_target_vec[0]*jp.sin(yaw) + torso_target_vec[1]*jp.cos(yaw)
-    rel_target_pos_xy = jp.stack([rel_target_x, rel_target_y])
-
-    rel_target_pos_xy_normalized = rel_target_pos_xy/(jp.linalg.norm(rel_target_pos_xy) + 1e-6) # L2-Normalisierung
-
     # Noise für die (relative) Ball- und Zielposition
 
     torso_ball_distance = jp.linalg.norm(torso_ball_vec)
-    torso_target_distance = jp.linalg.norm(torso_target_vec)
 
     info["rng"], noise_rng = jax.random.split(info["rng"])
-    rel_ball_pos_xy_normalized = (
-        rel_ball_pos_xy_normalized
-        + (2 * jax.random.uniform(noise_rng, shape=rel_ball_pos_xy_normalized.shape) - 1)
+    rel_ball_pos_xy = (
+        rel_ball_pos_xy
+        + (2 * jax.random.uniform(noise_rng, shape=rel_ball_pos_xy.shape) - 1)
         * self._config.noise_config.level
         * 0.01
-        * (torso_ball_distance / 10.0) # Je weiter der Ball entfernt ist, desto mehr Rauschen wird hinzugefügt
+        #* (torso_ball_distance / 10.0) # Je weiter der Ball entfernt ist, desto mehr Rauschen wird hinzugefügt
     )
 
     info["rng"], noise_rng = jax.random.split(info["rng"])
-    rel_target_pos_xy_normalized = (
-        rel_target_pos_xy_normalized
-        + (2 * jax.random.uniform(noise_rng, shape=rel_ball_pos_xy_normalized.shape) - 1)
-        * self._config.noise_config.level
-        * 0.01
-        * (torso_target_distance / 20.0) # Je weiter das Ziel entfernt ist, desto mehr Rauschen wird hinzugefügt
-    )
 
     # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
         #noisy_linvel,  # 3
         noisy_gyro,  # 3
         noisy_gravity,  # 3
-        info["command"],  # 3
+        #info["command"],  # 3
         noisy_joint_angles - self._default_pose,  # 18 Gelenkwindel relativ zur Standardposition
         noisy_joint_vel,  # 18
         info["last_act"],  # 18 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase, #4
-        rel_ball_pos_xy_normalized,
+        rel_ball_pos_xy,
         #ball_speed_normalized,
-        rel_target_pos_xy_normalized
     ])
 
     accelerometer = self.get_accelerometer(data) # Übernehmbar  -> base.py anpassen
@@ -722,7 +673,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
         torso_pos, # 3
         ball_pos, # 3
         ball_speed,
-        target_pos
     ])
 
     return {
@@ -791,7 +741,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "ball_velocity": self._reward_ball_velocity(data),
         "ball_distance": self._reward_ball_distance(data, info),
         "robot_ball_orientation": self._cost_robot_ball_orientation(data),
-        "ball_target_deviation": self._cost_ball_target_deviation(data),
     }
 
   # Tracking rewards.
@@ -971,20 +920,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     ball_speed_normalized = ball_speed/max_ball_vel 
 
-    # Ball direction
-    ball_target_vec = data.xpos[self._target_body_id, :2] - data.xpos[self._ball_body_id, :2]
-    cos_angle = jp.where(
-      (jp.linalg.norm(ball_vel) > 1e-6) & (jp.linalg.norm(ball_target_vec) > 1e-6),
-      jp.clip((ball_vel @ ball_target_vec) / (jp.linalg.norm(ball_vel) * jp.linalg.norm(ball_target_vec)), a_min = -1, a_max = 1),
-      -1
-    )
-    deviation = jp.arccos(cos_angle) # Ergebnis ist immer positiv
-    # deviation = (deviation + jp.pi) % jp.pi
-
-    deviation_normalized = (jp.pi - deviation) / jp.pi
-
     # Reward
-    reward = jp.square(ball_speed_normalized * deviation_normalized)
+    reward = jp.square(ball_speed_normalized)
 
     return reward
   
@@ -1060,92 +997,6 @@ class Joystick(wolfgang_base.WolfgangEnv):
     yaw = jp.arctan2(2*(w*z + x*y), 1-2*(y**2 + z**2))
 
     return yaw
-
-  def _cost_ball_target_deviation(
-      self,
-      data: mjx.Data,
-  ):
-    """
-    vec_robot_ball = data.xpos[self._ball_body_id, :2] - data.xpos[self._torso_body_id, :2]
-    vec_ball_target = data.xpos[self._target_body_id, :2] - data.xpos[self._ball_body_id, :2]
-    
-    norm_rb = jp.linalg.norm(vec_robot_ball)
-    norm_bt = jp.linalg.norm(vec_ball_target)
-
-    cond = jp.where(jp.any(norm_rb <= 1e-6) | jp.any(norm_bt <= 1e-6), True, False)
-    reward_true_cond = jp.where(norm_bt <= 1e-6, 1.0, 0.0)
-    
-    # Neue Methode: atan2
-    dot = jp.dot(vec_robot_ball, vec_ball_target)
-    cross = vec_robot_ball[0] * vec_ball_target[1] - vec_robot_ball[1] * vec_ball_target[0]
-    theta = jp.atan2(cross, dot)  # Signed Winkel
-    deviation = jp.abs(theta)  # Unsigned für [0, π]
-    deviation_normalized = deviation / jp.pi
-    
-    reward_false_cond = 1 - deviation_normalized
-
-    reward = jp.where(cond, reward_true_cond, reward_false_cond)
-
-    return reward
-    """
-
-    #robot_target hat gute Ergebnisse geliefert -> 0.3 Schranke
-
-    
-
-    base_quat = data.qpos[3:7]
-
-    yaw = self.quat_to_yaw(base_quat)
-
-    # Robot-Ball Angle Diff
-    vec_ball_target = data.xpos[self._target_body_id, :2] - data.xpos[self._ball_body_id, :2]
-
-    ball_target_yaw = jp.arctan2(vec_ball_target[1], vec_ball_target[0])
-
-    angle_diff_robot_ball_target_vec = (ball_target_yaw - yaw + jp.pi) % (2 * jp.pi) - jp.pi 
-
-    cost_robot_target = (1 - jp.cos(angle_diff_robot_ball_target_vec))/2
-
-    # Cost Function
-    cost = cost_robot_target
-
-    robot_ball_distance = jp.linalg.norm(
-      data.xpos[self._torso_body_id, :2] - data.xpos[self._ball_body_id, :2]
-    )
-
-    weight = jp.where(robot_ball_distance > 0.25, 0.05, 5.0)
-
-    return cost * weight
-
-    
-
-    """
-    base_quat = data.qpos[3:7]
-
-    yaw = self.quat_to_yaw(base_quat)
-
-    # Robot-Ball Angle Diff
-    vec_robot_target = data.xpos[self._target_body_id, :2] - data.xpos[self._torso_body_id, :2]
-
-    robot_target_yaw = jp.arctan2(vec_robot_target[1], vec_robot_target[0])
-
-    angle_diff_robot_target = (robot_target_yaw - yaw + jp.pi) % (2 * jp.pi) - jp.pi 
-
-    cost_robot_target = (1 - jp.cos(angle_diff_robot_target))/2
-
-    # Cost Function
-    cost = cost_robot_target
-
-    robot_ball_distance = jp.linalg.norm(
-      data.xpos[self._torso_body_id, :2] - data.xpos[self._ball_body_id, :2]
-    )
-
-    weight = jp.where(robot_ball_distance > 0.3, 0.1, 3.0)
-
-    return cost * weight
-
-    """
-
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)
