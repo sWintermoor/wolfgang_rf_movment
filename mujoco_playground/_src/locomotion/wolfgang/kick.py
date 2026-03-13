@@ -123,7 +123,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
   def _post_init(self) -> None:
     # XML-Datei überprüfen, ob entsprechende Eigenschaften vorhanden sind, z.B. _mj_model.Eigenschaft
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos) # Keyframe ist ein gespeicherter Zustand des Modells -> Standardposition (Für Wolfgang?)
-    self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:25])
+    self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:19])
 
     self._ball_body_id = self._mj_model.body("ball").id
 
@@ -152,8 +152,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # Gewichtsvektoren für die Gelenke -> Wie wichtig sind die einzelnen Elemente für die Belohnung?
     # fmt: off
     self._weights = jp.array([
-        0, 0, 0,  # right arm
-        0, 0, 0,  # left arm
+        #0, 0, 0,  # right arm
+        #0, 0, 0,  # left arm
       
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # left leg.
         1.0, 1.0, 0.01, 0.01, 1.0, 1.0,  # right leg.
@@ -187,7 +187,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._foot_linvel_sensor_adr = jp.array(foot_linvel_sensor_adr)
 
     # Hinzufügen von Rauschen in den Gelenkstellungen
-    qpos_noise_scale = np.zeros(18)
+    qpos_noise_scale = np.zeros(12)
     hip_ids = [0, 1, 2, 6, 7, 8]
     kfe_ids = [3, 9]
     ffe_ids = [4, 10] # joint type...
@@ -217,8 +217,8 @@ class Joystick(wolfgang_base.WolfgangEnv):
     # Zufällige Gelenkpositionen 
     # qpos[7:]=*U(0.5, 1.5)
     rng, key = jax.random.split(rng)
-    qpos = qpos.at[7:25].set(
-        qpos[7:25] * jax.random.uniform(key, (18,), minval=0.5, maxval=1.5)
+    qpos = qpos.at[7:19].set(
+        qpos[7:19] * jax.random.uniform(key, (12,), minval=0.5, maxval=1.5)
     )
 
     # Zufällige Gelenkgeschwindigkeiten
@@ -261,7 +261,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     self._mj_model.geom("ball_geom").friction = new_ball_friction
 
     # Erstellen MuJoCo-Datenobjekt mit den initialien Zuständen
-    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:25])
+    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:19])
 
     # Zufällige Gangfrequenz (gait_freq) + Phaseninkrement (phase_dt)
     # Phase, freq=U(1.0, 1.5)
@@ -531,7 +531,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Übernehmbar
-    joint_angles = data.qpos[7:25]
+    joint_angles = data.qpos[7:19]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_angles = (
         joint_angles
@@ -541,7 +541,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
     )
 
     # Übernehmbar
-    joint_vel = data.qvel[6:24]
+    joint_vel = data.qvel[6:18]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_vel = (
         joint_vel
@@ -641,9 +641,9 @@ class Joystick(wolfgang_base.WolfgangEnv):
         noisy_gyro,  # 3
         noisy_gravity,  # 3
         #info["command"],  # 3
-        noisy_joint_angles - self._default_pose,  # 18 Gelenkwindel relativ zur Standardposition
-        noisy_joint_vel,  # 18
-        info["last_act"],  # 18 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
+        noisy_joint_angles - self._default_pose,  # 12 Gelenkwindel relativ zur Standardposition
+        noisy_joint_vel,  # 12
+        info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase, #4
         rel_ball_pos_xy,
         #ball_speed_normalized,
@@ -710,7 +710,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         "action_rate": self._cost_action_rate(
             action, info["last_act"], info["last_last_act"]
         ),
-        "energy": self._cost_energy(data.qvel[6:24], data.actuator_force),
+        "energy": self._cost_energy(data.qvel[6:18], data.actuator_force),
         # Feet related rewards.
         "feet_slip": self._cost_feet_slip(data, contact, info),
         "feet_clearance": self._cost_feet_clearance(data, info),
@@ -729,14 +729,14 @@ class Joystick(wolfgang_base.WolfgangEnv):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "stand_still": self._cost_stand_still(info["command"], data.qpos[7:25]),
+        "stand_still": self._cost_stand_still(info["command"], data.qpos[7:19]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
-            data.qpos[7:25], info["command"]
+            data.qpos[7:19], info["command"]
         ),
-        "joint_deviation_knee": self._cost_joint_deviation_knee(data.qpos[7:25]),
-        "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:25]),
-        "pose": self._cost_pose(data.qpos[7:25]),
+        "joint_deviation_knee": self._cost_joint_deviation_knee(data.qpos[7:19]),
+        "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:19]),
+        "pose": self._cost_pose(data.qpos[7:19]),
         # Ball related rewards      
         "ball_velocity": self._reward_ball_velocity(data),
         "ball_distance": self._reward_ball_distance(data, info),
