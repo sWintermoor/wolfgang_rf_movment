@@ -73,7 +73,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_clearance=0.0, # Fußfreiheit -> z.B. zu niedrige Schritte
               feet_air_time=2.0, # Belohnt die Zeit, in der die Füße in der Luft sind.
               feet_slip=-0.25, # Bestraft das Rutschen der Füße auf dem Boden
-              feet_height=0.0, # Abweichung der Fußhöhe
+              feet_height=0.1, # Abweichung der Fußhöhe
               feet_phase=1.0, # Belohnt das Einhalten eines gewünschten Gangzyklus.
               # Other rewards.
               stand_still=0.0, # Bewegung ohne Befehle
@@ -635,6 +635,16 @@ class Joystick(wolfgang_base.WolfgangEnv):
 
     info["rng"], noise_rng = jax.random.split(info["rng"])
 
+    #noisy last_act
+
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    noisy_last_act = (
+        info["last_act"]
+        + (2 * jax.random.uniform(noise_rng, shape=info["last_act"].shape) - 1)
+        * self._config.noise_config.level
+        * 0.01
+    )
+
     # Aktuelle Zustand des Roboters (als einziger Zustandsvektor gespeichert) -> Übernehmbar
     state = jp.hstack([
         #noisy_linvel,  # 3
@@ -643,7 +653,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         #info["command"],  # 3
         noisy_joint_angles - self._default_pose,  # 12 Gelenkwindel relativ zur Standardposition
         noisy_joint_vel,  # 12
-        info["last_act"],  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
+        noisy_last_act,  # 12 Steuerungsbefehle, die im letzten Schritt an die Aktuatoren gesendet wurden
         phase, #4
         rel_ball_pos_xy,
         #ball_speed_normalized,
@@ -661,7 +671,7 @@ class Joystick(wolfgang_base.WolfgangEnv):
         gyro,  # 3
         accelerometer,  # 3
         gravity,  # 3
-        linvel,  # 3
+        #linvel,  # 3
         global_angvel,  # 3
         joint_angles - self._default_pose,
         joint_vel,
